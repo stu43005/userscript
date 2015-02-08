@@ -2,6 +2,7 @@
 // @name           Plurk Nagi
 // @namespace      Plurk
 // @include        http://www.plurk.com/*
+// @include        https://www.plurk.com/*
 // ==/UserScript==
 
 (function(file){
