@@ -1,15 +1,87 @@
 // images from http://anohito.tw/sandbox/negi/
 
-jQuery(document).ready(function(b) {
-	if (!b("body").hasClass("timeline") || !isCanvasSupported()) {
+jQuery(document).ready(function($) {
+	if (!$("body").hasClass("timeline") || !isCanvasSupported()) {
 		return
 	}
+
+	var restoreDefultImages = function restoreDefultImages() {
+		saveImages($.map([1,2,3,4,5,6], function(e) {
+			return "http://anohito.tw/sandbox/negi/negi" + e + ".png"
+		}));
+	};
+
+	var updateImagesDOM = function updateImagesDOM() {
+		canvas_snow.imagesDOM = $.map(canvas_snow.images, function(e) {
+			return $("<img/>").attr('src', e).get(0);
+		});
+	};
+
+	var saveImages = function saveImages(imgs) {
+		canvas_snow.images = imgs;
+
+		// save image setting to cookie
+		var c = new Date(Date.now() + (86400 * 1000 * 30));
+		document.cookie = "negii=" + encodeURIComponent(JSON.stringify(canvas_snow.images)) + "; path=/; expires=" + c.toUTCString();
+
+		updateImagesDOM();
+		restartSnow();
+	};
+
+	var restartSnow = function restartSnow() {
+		window.cancelAnimationFrame(canvas_snow.aniID);
+		window.clearTimeout(canvas_snow.aniID);
+		canvas_snow.init(true);
+	};
+
+	var showIcon = function showIcon() {
+		if (window.negi_origin) {
+			$(".snowflake").text("❄");
+		} else {
+			$(".snowflake").html('<img src="http://anohito.tw/sandbox/negi/negi' + (Math.ceil(Math.random() * 6)) + '.png"/>');
+		}
+	}
+
+	// this function code from https://github.com/carhartl/jquery-cookie
+	var parseCookieValue = function parseCookieValue(s) {
+		if (s.indexOf('"') === 0) {
+			// This is a quoted cookie as according to RFC2068, unescape...
+			s = s.slice(1, -1).replace(/\\"/g, '"').replace(/\\\\/g, '\\');
+		}
+
+		try {
+			// Replace server-side written pluses with spaces.
+			// If we can't decode the cookie, ignore it, it's unusable.
+			// If we can't parse the cookie, ignore it, it's unusable.
+			s = decodeURIComponent(s.replace(/\+/g, ' '));
+			return JSON.parse(s);
+		} catch(e) {}
+	};
+
+	if (document.cookie.replace(/(?:(?:^|.*;\s*)negio\s*\=\s*([^;]*).*$)|^.*$/, "$1") !== "true") {
+		window.negi_orientation = false;
+	} else {
+		window.negi_orientation = true;
+	}
+
+	if (document.cookie.replace(/(?:(?:^|.*;\s*)negip\s*\=\s*([^;]*).*$)|^.*$/, "$1") !== "true") {
+		window.negi_origin = false;
+	} else {
+		window.negi_origin = true;
+	}
+	showIcon();
+
+	canvas_snow.images = parseCookieValue(document.cookie.replace(/(?:(?:^|.*;\s*)negii\s*\=\s*([^;]*).*$)|^.*$/, "$1"));
+	if (!canvas_snow.images) {
+		restoreDefultImages();
+	}
+
+	updateImagesDOM();
 
 	canvas_snow.snow = function() {
 		var j = canvas_snow;
 		var q = j.ctx;
 		var e = j.cv;
-		var negi = jQuery('<img/>');
 		q.clearRect(0, 0, e.width, e.height);
 		for (var d = 0; d < j.flakeCount; d++) {
 			var f = j.flakes[d],
@@ -35,26 +107,195 @@ jQuery(document).ready(function(b) {
 				}
 				f.velX += Math.cos(f.step += 0.05) * f.stepSize
 			}
-			//q.fillStyle = "rgba(255,255,255," + f.opacity + ")";
-			f.y += f.velY;
-			f.x += f.velX;
+			if (window.negi_orientation) {
+				f.y += f.velX;
+				f.x += f.velY;
+			} else {
+				f.y += f.velY;
+				f.x += f.velX;
+			}
 			if (f.y >= e.height || f.y <= 0) {
 				j.resetFlake(f)
 			}
 			if (f.x >= e.width || f.x <= 0) {
 				j.resetFlake(f)
 			}
-			//q.beginPath();
-			//q.arc(f.x, f.y, f.size, 0, Math.PI * 2);
-			//q.fill();
-			if (!f.type) {
-				f.type = Math.ceil(Math.random() * 6);
+			if (window.negi_origin) {
+				q.fillStyle = "rgba(255,255,255," + f.opacity + ")";
+				q.beginPath();
+				q.arc(f.x, f.y, f.size, 0, Math.PI * 2);
+				q.fill();
+			} else {
+				if (!f.type) {
+					f.type = Math.floor(Math.random() * j.images.length);
+				}
+				q.drawImage(j.imagesDOM[f.type], f.x, f.y);
 			}
-			negi.attr('src', "http://anohito.tw/sandbox/negi/negi" + f.type + ".png");
-			q.drawImage(negi.get(0), f.x, f.y);
 		}
 		j.aniID = requestAnimationFrame(j.snow)
 	};
 
-	jQuery(".snowflake").html('<img src="http://anohito.tw/sandbox/negi/negi' + (Math.ceil(Math.random() * 6)) + '.png"/>');
+	canvas_snow.resetFlake = function(a) {
+		if (window.negi_orientation) {
+			a.x = 0;
+			a.y = Math.floor(Math.random() * canvas_snow.cv.height);
+		} else {
+			a.x = Math.floor(Math.random() * canvas_snow.cv.width);
+			a.y = 0;
+		}
+		a.size = (Math.random() * 2.5) + 2;
+		a.speed = (Math.random() * 0.6) + 0.2;
+		a.velY = a.speed;
+		a.velX = 0;
+		a.opacity = (Math.random() * 0.5) + 0.3;
+		a.type = undefined;
+	};
+
+	$(".snowflake").bind("contextmenu", function(e) {
+		e.preventDefault();
+		showSettingPanel();
+	});
+
+	var removeSettingPanel = function removeSettingPanel() {
+		$("#plurk_negi_setting_overlay, #plurk_negi_setting").remove();
+	}
+
+	var showSettingPanel = function showSettingPanel() {
+		removeSettingPanel();
+
+		$("<div/>", {
+			id: "plurk_negi_setting_overlay",
+			css: {
+				position: "fixed",
+				top: 0,
+				left: 0,
+				width: "100%",
+				height: "100%",
+				background: "rgba(51, 51, 51, 0.9)",
+				"z-index": 10003
+			},
+			click: function() {
+				removeSettingPanel();
+			}
+		}).appendTo("body");
+
+		var imageInput = function imageInput(url, index) {
+			return $("<div/>", {
+				html: $("<input/>", {
+					type: "text",
+					val: url,
+					css: {
+						width: "75%"
+					}
+				})
+			});
+		};
+
+		$("<div/>", {
+			id: "plurk_negi_setting",
+			css: {
+				position: "fixed",
+				top: "25%",
+				left: "25%",
+				width: "50%",
+				height: "50%",
+				background: "white",
+				color: "black",
+				padding: 8,
+				"box-shadow": "0 0 10px #333",
+				"border-radius": 8,
+				"z-index": 10004
+			},
+			html: $("<div/>", {
+				css: {
+					height: "100%",
+					"overflow-y": "auto"
+				},
+				html: [
+					$("<span/>", {
+						text: "Plurk Negi　　"
+					}),
+					$("<input/>", {
+						id: "plurk_negi_setting_origin",
+						type: "checkbox",
+						checked: window.negi_origin ? "checked" : undefined,
+						change: function() {
+							var c = new Date(Date.now() + (86400 * 1000 * 30));
+							if ($(this).attr("checked")) {
+								window.negi_origin = true;
+								document.cookie = "negip=true; path=/; expires=" + c.toUTCString();
+							} else {
+								window.negi_origin = false;
+								document.cookie = "negip=false; path=/; expires=" + c.toUTCString();
+							}
+							showIcon();
+							restartSnow();
+						}
+					}),
+					$("<label/>", {
+						"for": "plurk_negi_setting_origin",
+						text: "停用換圖功能 (變回原始下雪樣式)"
+					}),
+					$("<div/>", {
+						id: "plurk_negi_setting_images",
+						html: [
+							$("<input/>", {
+								type: "button",
+								value: "增加圖片",
+								click: function() {
+									$(this).parent().append(imageInput(""));
+								}
+							}), $("<input/>", {
+								type: "button",
+								value: "儲存設定",
+								click: function() {
+									saveImages($.map($("#plurk_negi_setting_images input:text"), function(e) {
+										return $(e).val().trim();
+									}).filter(function(e) {
+										return e != "";
+									}));
+								}
+							}), $("<input/>", {
+								type: "button",
+								value: "還原成蔥花",
+								click: function() {
+									if (confirm("確定要將所有圖片還原成蔥花嗎? (此動作無法復原)")) {
+										restoreDefultImages();
+										showSettingPanel();
+									}
+								}
+							})
+						].concat($.map(canvas_snow.images, imageInput))
+					}),
+					$("<div/>", {
+						html: [
+							$("<span/>", {
+								text: "動畫方向："
+							}),
+							$("<input/>", {
+								id: "plurk_negi_setting_orientation",
+								type: "checkbox",
+								checked: window.negi_orientation ? "checked" : undefined,
+								change: function() {
+									var c = new Date(Date.now() + (86400 * 1000 * 30));
+									if ($(this).attr("checked")) {
+										window.negi_orientation = true;
+										document.cookie = "negio=true; path=/; expires=" + c.toUTCString();
+									} else {
+										window.negi_orientation = false;
+										document.cookie = "negio=false; path=/; expires=" + c.toUTCString();
+									}
+									restartSnow();
+								}
+							}),
+							$("<label/>", {
+								"for": "plurk_negi_setting_orientation",
+								text: "水平"
+							})
+						]
+					})
+				]
+			})
+		}).appendTo("body");
+	};
 });
