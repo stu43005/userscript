@@ -42,6 +42,18 @@ jQuery(document).ready(function($) {
 		}
 	}
 
+	var parseOrientationValue = function parseOrientationValue(s) {
+		if (s === "true") {
+			// old checkbox setting
+			return 2;
+		}
+		var i = parseInt(s);
+		if (i === NaN) {
+			return 0;
+		}
+		return i;
+	};
+
 	// this function code from https://github.com/carhartl/jquery-cookie
 	var parseCookieValue = function parseCookieValue(s) {
 		if (s.indexOf('"') === 0) {
@@ -58,11 +70,7 @@ jQuery(document).ready(function($) {
 		} catch(e) {}
 	};
 
-	if (document.cookie.replace(/(?:(?:^|.*;\s*)negio\s*\=\s*([^;]*).*$)|^.*$/, "$1") !== "true") {
-		window.negi_orientation = false;
-	} else {
-		window.negi_orientation = true;
-	}
+	window.negi_orientation = parseOrientationValue(document.cookie.replace(/(?:(?:^|.*;\s*)negio\s*\=\s*([^;]*).*$)|^.*$/, "$1"));
 
 	if (document.cookie.replace(/(?:(?:^|.*;\s*)negip\s*\=\s*([^;]*).*$)|^.*$/, "$1") !== "true") {
 		window.negi_origin = false;
@@ -107,12 +115,23 @@ jQuery(document).ready(function($) {
 				}
 				f.velX += Math.cos(f.step += 0.05) * f.stepSize
 			}
-			if (window.negi_orientation) {
-				f.y += f.velX;
-				f.x += f.velY;
-			} else {
-				f.y += f.velY;
-				f.x += f.velX;
+			switch (window.negi_orientation) {
+				case 0:
+					f.y += f.velY;
+					f.x += f.velX;
+					break;
+				case 1:
+					f.y -= f.velY;
+					f.x += f.velX;
+					break;
+				case 2:
+					f.y += f.velX;
+					f.x += f.velY;
+					break;
+				case 3:
+					f.y += f.velX;
+					f.x -= f.velY;
+					break;
 			}
 			if (f.y >= e.height || f.y <= 0) {
 				j.resetFlake(f)
@@ -136,12 +155,23 @@ jQuery(document).ready(function($) {
 	};
 
 	canvas_snow.resetFlake = function(a) {
-		if (window.negi_orientation) {
-			a.x = 0;
-			a.y = Math.floor(Math.random() * canvas_snow.cv.height);
-		} else {
-			a.x = Math.floor(Math.random() * canvas_snow.cv.width);
-			a.y = 0;
+		switch (window.negi_orientation) {
+			case 0:
+				a.x = Math.floor(Math.random() * canvas_snow.cv.width);
+				a.y = 0;
+				break;
+			case 1:
+				a.x = Math.floor(Math.random() * canvas_snow.cv.width);
+				a.y = canvas_snow.cv.height;
+				break;
+			case 2:
+				a.x = 0;
+				a.y = Math.floor(Math.random() * canvas_snow.cv.height);
+				break;
+			case 3:
+				a.x = canvas_snow.cv.width;
+				a.y = Math.floor(Math.random() * canvas_snow.cv.height);
+				break;
 		}
 		a.size = (Math.random() * 2.5) + 2;
 		a.speed = (Math.random() * 0.6) + 0.2;
@@ -218,10 +248,9 @@ jQuery(document).ready(function($) {
 					$("<input/>", {
 						id: "plurk_negi_setting_origin",
 						type: "checkbox",
-						checked: window.negi_origin ? "checked" : undefined,
 						change: function() {
 							var c = new Date(Date.now() + (86400 * 1000 * 30));
-							if ($(this).attr("checked")) {
+							if ($(this).prop("checked")) {
 								window.negi_origin = true;
 								document.cookie = "negip=true; path=/; expires=" + c.toUTCString();
 							} else {
@@ -231,7 +260,7 @@ jQuery(document).ready(function($) {
 							showIcon();
 							restartSnow();
 						}
-					}),
+					}).prop("checked", window.negi_origin ? "checked" : undefined),
 					$("<label/>", {
 						"for": "plurk_negi_setting_origin",
 						text: "停用換圖功能 (變回原始下雪樣式)"
@@ -271,28 +300,30 @@ jQuery(document).ready(function($) {
 						html: [
 							$("<span/>", {
 								text: "動畫方向："
-							}),
-							$("<input/>", {
-								id: "plurk_negi_setting_orientation",
-								type: "checkbox",
-								checked: window.negi_orientation ? "checked" : undefined,
-								change: function() {
-									var c = new Date(Date.now() + (86400 * 1000 * 30));
-									if ($(this).attr("checked")) {
-										window.negi_orientation = true;
-										document.cookie = "negio=true; path=/; expires=" + c.toUTCString();
-									} else {
-										window.negi_orientation = false;
-										document.cookie = "negio=false; path=/; expires=" + c.toUTCString();
-									}
-									restartSnow();
-								}
-							}),
-							$("<label/>", {
-								"for": "plurk_negi_setting_orientation",
-								text: "水平"
 							})
-						]
+						].concat($.map(["上>下", "下>上", "左>右", "右>左"], function(e, index) {
+							return $("<div/>", {
+								html: [
+									$("<input/>", {
+										id: "plurk_negi_setting_orientation_" + index,
+										name: "plurk_negi_setting_orientation",
+										type: "radio",
+										change: function() {
+											if ($(this).prop("checked")) {
+												var c = new Date(Date.now() + (86400 * 1000 * 30));
+												window.negi_orientation = index;
+												document.cookie = "negio=" + index + "; path=/; expires=" + c.toUTCString();
+												restartSnow();
+											}
+										}
+									}).prop("checked", window.negi_orientation === index ? "checked" : undefined),
+									$("<label/>", {
+										"for": "plurk_negi_setting_orientation_" + index,
+										text: e
+									})
+								]
+							})
+						}))
 					})
 				]
 			})
