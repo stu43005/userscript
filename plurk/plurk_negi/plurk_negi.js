@@ -186,6 +186,27 @@ jQuery(document).ready(function($) {
 		showSettingPanel();
 	});
 
+	$("#top_bar .bar-block.right .pulldown .menu ul a[href*='/Settings/show?page=theme']").parent().after($("<li/>", {
+		"class": "sep"
+	}), $("<li/>", {
+		"class": "nohover",
+		html: $("<div/>", {
+			html: $("<i/>", {
+				css: {
+					color: "#aaa"
+				},
+				text: "Plurk Negi"
+			})
+		})
+	}), $("<li/>", {
+		html: $("<a/>", {
+			text: "變更圖片及方向",
+			click: function() {
+				showSettingPanel();
+			}
+		})
+	}));
+
 	var removeSettingPanel = function removeSettingPanel() {
 		$("#plurk_negi_setting_overlay, #plurk_negi_setting").remove();
 	}
