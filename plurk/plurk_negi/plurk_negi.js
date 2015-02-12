@@ -146,7 +146,7 @@ jQuery(document).ready(function($) {
 				q.fill();
 			} else {
 				if (!f.type) {
-					f.type = Math.floor(Math.random() * j.images.length);
+					f.type = Math.floor(Math.random() * j.imagesDOM.length);
 				}
 				q.drawImage(j.imagesDOM[f.type], f.x, f.y);
 			}
