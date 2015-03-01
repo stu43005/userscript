@@ -1,6 +1,25 @@
 // images from http://anohito.tw/sandbox/negi/
 
+// plurk canvas_snow script: https://gist.github.com/stu43005/c040c6371d22ac503614
+(function(file){
+  var script=document.createElement('script');
+  script.type='text/javascript';
+  script.src=file;
+  document.body.appendChild(script);
+})("https://cdn.rawgit.com/stu43005/c040c6371d22ac503614/raw/plurk.canvas_snow.js");
+(function(file){
+  jQuery.get(file, function(data) {
+    var style = document.createElement('style');
+    style.innerHTML = data;
+    document.head.appendChild(style);
+  });
+})("https://cdn.rawgit.com/stu43005/c040c6371d22ac503614/raw/plurk.canvas_snow.css");
+
 jQuery(document).ready(function($) {
+	if (typeof canvas_snow == "undefined") {
+		return setTimeout(arguments.callee.bind($, $), 1000);
+	}
+
 	if (!$("body").hasClass("timeline") || !isCanvasSupported()) {
 		return
 	}
