@@ -67,7 +67,7 @@ jQuery(document).ready(function($) {
 			return 2;
 		}
 		var i = parseInt(s);
-		if (i === NaN) {
+		if (isNaN(i)) {
 			return 0;
 		}
 		return i;
