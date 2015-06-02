@@ -3,6 +3,8 @@
 // @namespace      Plurk
 // @include        http://www.plurk.com/*
 // @include        https://www.plurk.com/*
+// @exclude    http://www.plurk.com/_comet/generic?*
+// @exclude    https://www.plurk.com/_comet/generic?*
 // ==/UserScript==
 
 (function(file){
