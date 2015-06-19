@@ -103,6 +103,25 @@
 			}
 		}
 	}, {
+		name: "未分類移至自定義分類",
+		namespace: "_pageid",
+		func: function() {
+			var page = this;
+			var name = prompt("請輸入新分類名稱", "New Category");
+			if (name && name.replace(/\s*/, '') !== "") {
+				var list = page.reader.listSubscriptions("global.uncategorized"),
+					length = list.length;
+				console.log("新分類名稱:", name);
+				list.forEach(function(sub, i) {
+					console.log((i + 1) + "/" + length, "Subscription", sub.id);
+					page.reader.askUpdateSubscription(sub.id, null, [name], ["global.uncategorized"], {}, false, function() {}, function(ex) {
+						console.log("Error:" + ex);
+					});
+				});
+				console.log("Done.");
+			}
+		}
+	}, {
 		name: "Debug",
 		namespace: "_pageid",
 		func: function() {
