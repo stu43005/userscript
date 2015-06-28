@@ -3,7 +3,7 @@
 // @description   Load all manga in current page, only available on dm5.com
 // @author        Shiaupiau (https://github.com/stu43005)
 // @include       http://*.dm5.com/*
-// @version       1.0.2
+// @version       1.0.3
 // ==/UserScript==
 
 (function(func) {
@@ -38,7 +38,7 @@
 			manga.load_next_image(manga.current_page);
 			manga.auto_load_image();
 		},
-		onscroll: function(e) {
+		onscroll: function() {
 			var middle_loc = window.innerHeight / 2 + $("body").scrollTop(),
 				first_index = manga.get_first_image().data("index"),
 				next_index = manga.current_page;
@@ -178,6 +178,7 @@
 			manga.in_animate = true;
 			$("body").stop().animate(animate, time || 200, function() {
 				manga.in_animate = false;
+				manga.onscroll();
 			});
 		},
 		addStyle: function(string) {
