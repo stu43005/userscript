@@ -3,7 +3,7 @@
 // @description   Load all manga in current page, only available on dm5.com
 // @author        Shiaupiau (https://github.com/stu43005)
 // @include       http://*.dm5.com/*
-// @version       1.0.1
+// @version       1.0.2
 // ==/UserScript==
 
 (function(func) {
@@ -186,9 +186,12 @@
 			document.head.appendChild(style);
 		},
 		replace_origin_image: function() {
-			var src = manga.container.find("img").attr("src");
-			manga.container.empty();
-			manga.container.append(manga.get_image(DM5_PAGE, src));
+			var cp_image = manga.container.find("img#cp_image");
+			if (cp_image.length > 0) {
+				var img = manga.get_image(DM5_PAGE, cp_image.attr("src"));
+				cp_image.remove();
+				manga.append_image(DM5_PAGE, img);
+			}
 		},
 		get_image: function(page, src) {
 			if (!manga.check_image(page) && src) {
@@ -261,6 +264,7 @@
 			manga.request_page[page] = callback;
 		},
 		auto_load_image: function() {
+			manga.replace_origin_image();
 			for (var page in manga.request_page) {
 				if (!manga.check_image(page)) {
 					manga.load_image_ajax(page, manga.request_page[page]);
