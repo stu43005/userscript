@@ -268,7 +268,7 @@
 			manga.replace_origin_image();
 			for (var page in manga.request_page) {
 				if (!manga.check_image(page)) {
-					manga.load_image_ajax(page, manga.request_page[page]);
+					manga.load_image_ajax(parseInt(page), manga.request_page[page]);
 					delete manga.request_page[page];
 					return;
 				}
@@ -297,7 +297,7 @@
 						var arr;
 						eval(msg); // jshint ignore:line
 						arr = d;
-						callback.call(manga, arr);
+						callback.call(manga, page, arr);
 					}
 					manga.auto_load_image();
 				}
@@ -305,43 +305,36 @@
 		},
 		load_next_image: function(page) {
 			if (page + 1 > DM5_IMAGE_COUNT) return;
-			manga.load_image(page + 1, function(arr) {
+			manga.load_image(page + 1, function(page, arr) {
 				for (var i = 0; i < arr.length; i++) {
-					manga.load_image_sub(arr[i]);
+					manga.load_image_sub(page + i, arr[i]);
 				}
-				if (page + arr.length < DM5_IMAGE_COUNT) {
+				if (page + arr.length <= DM5_IMAGE_COUNT) {
 					setTimeout(function() {
-						manga.load_next_image(page + arr.length);
+						manga.load_next_image(page + arr.length - 1);
 					}, 2500);
 				}
 			});
 		},
 		load_pre_image: function(page) {
 			if (page - 1 < 1) return;
-			manga.load_image(page - 1, function(arr) {
+			manga.load_image(page - 1, function(page, arr) {
 				var current = manga.get_image(manga.current_page),
 					offsetTop = current.offset().top;
 				manga.in_animate = true;
 				for (var i = arr.length - 1; i >= 0; i--) {
-					manga.load_image_sub(arr[i]);
+					manga.load_image_sub(page + i, arr[i]);
 				}
 				setTimeout(function() {
-					$("body").stop().animate({
+					manga.bodyAnimate({
 						scrollTop: "+=" + (current.offset().top - offsetTop)
-					}, 0, function() {
-						manga.in_animate = false;
-					});
+					}, 0);
 				}, 20);
 			});
 		},
-		load_image_sub: function(url_) {
-			var url = url_.trim(),
-				index = url.match(/\/(\d+)_/);
-			if (index) {
-				index = parseInt(index[1]);
-				var img = manga.get_image(index, url);
-				manga.append_image(index, img);
-			}
+		load_image_sub: function(page, url) {
+			var img = manga.get_image(page, url);
+			manga.append_image(page, img);
 		},
 		append_image: function(page, img) {
 			if (manga.check_image(page - 1)) {
