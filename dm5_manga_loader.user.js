@@ -3,7 +3,7 @@
 // @description   Load all manga in current page, only available on dm5.com
 // @author        Shiaupiau (https://github.com/stu43005)
 // @include       http://*.dm5.com/*
-// @version       1.0.4
+// @version       1.0.5
 // ==/UserScript==
 
 (function(func) {
@@ -291,7 +291,10 @@
 					language: 1,
 					gtk: 6
 				},
-				error: function(msg) {},
+				error: function(msg) {
+					manga.load_image(page, callback);
+					setTimeout(manga.auto_load_image, 1000);
+				},
 				success: function(msg) {
 					if (msg !== "") {
 						var arr;
