@@ -3,7 +3,7 @@
 // @description   Load all manga in current page, only available on dm5.com
 // @author        Shiaupiau (https://github.com/stu43005)
 // @include       http://*.dm5.com/*
-// @version       1.0.5
+// @version       1.0.6
 // ==/UserScript==
 
 (function(func) {
@@ -247,7 +247,7 @@
 		},
 		update_status: function(page, noPushState) {
 			if (!manga.in_animate && page > 0) {
-				var url = "http://tel.dm5.com" + DM5_CURL.substring(0, DM5_CURL.length - 1) + "-p" + page + "/";
+				var url = location.protocol + "//" + location.hostname + DM5_CURL.substring(0, DM5_CURL.length - 1) + "-p" + page + "/";
 				var title = document.title.replace(/第\d+页/, "第" + page + "页");
 				console.log(page, title, url);
 				document.title = title;
