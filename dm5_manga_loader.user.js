@@ -3,7 +3,7 @@
 // @description   Load all manga in current page, only available on dm5.com
 // @author        Shiaupiau (https://github.com/stu43005)
 // @include       http://*.dm5.com/*
-// @version       1.0.7
+// @version       1.1
 // ==/UserScript==
 
 (function(func) {
@@ -17,15 +17,17 @@
 		current_page: DM5_PAGE,
 		images: {},
 		request_page: {},
+		image_select_box: null,
 		next_chapter_box: null,
 		next_chapter_url: null,
 		in_animate: false,
 		init: function() {
-			manga.addStyle(".manga_image{box-sizing:border-box;padding:1px!important;border:2px solid gray!important;margin:0 auto 10px!important;display:block!important;max-width:99%!important;width:auto!important;height:auto!important;cursor:pointer;}#next_chapter_box{background:#333;position:fixed;top:50%;left:50%;margin:0;z-index:999999;padding:20px;color:#fff;font-size:16px;box-shadow:0 0 15px #000;border-radius:5px;}#next_chapter_box a{color:#FF4E00;cursor:pointer;}#next_chapter_box .close{position:absolute;top:5px;right:5px;font-size:12px;}");
+			manga.addStyle(".manga_image{box-sizing:border-box;padding:1px!important;border:2px solid gray!important;margin:0 auto 10px!important;display:block!important;max-width:99%!important;width:auto!important;height:auto!important;cursor:pointer;}#next_chapter_box,#image_select_box{background:#333;position:fixed;top:50%;margin:0;z-index:999999;padding:20px;color:#fff;font-size:16px;box-shadow:0 0 15px #000;border-radius:5px;}#next_chapter_box{left:50%;}#next_chapter_box a{color:#FF4E00;cursor:pointer;}#next_chapter_box .close{position:absolute;top:5px;right:5px;font-size:12px;}#image_select_box{right:0;}");
 
 			manga.container = $(manga.selector);
 			manga.container.find("#imgloading").remove();
 			manga.replace_origin_image();
+			manga.show_image_select_box();
 
 			$(document)
 				.scroll(manga.onscroll)
@@ -262,7 +264,9 @@
 				var title = document.title.replace(/第\d+页/, "第" + page + "页");
 				console.log(page, title, url);
 				document.title = title;
+				$("#c_page").text(page);
 				manga.current_page = page;
+				manga.update_image_select_box();
 				if (!noPushState) {
 					window.history.pushState({
 						url: url,
@@ -349,6 +353,7 @@
 		load_image_sub: function(page, url) {
 			var img = manga.get_image(page, url);
 			manga.append_image(page, img);
+			manga.update_image_select_box(page);
 		},
 		append_image: function(page, img) {
 			if (manga.check_image(page - 1)) {
@@ -358,6 +363,28 @@
 			} else {
 				manga.container.append(img);
 			}
+		},
+		show_image_select_box: function() {
+			$(".view_fy").hide();
+
+			var box = manga.image_select_box;
+			if (box === null || box.length < 1) {
+				box = manga.image_select_box = $('<div id="image_select_box"><select><select></div>');
+				var select = box.find("select").bind("change", function() {
+					manga.jump_to_image(parseInt($(this).val()));
+				});
+				for (var i = 1; i <= DM5_IMAGE_COUNT; i++) {
+					$('<option value="' + i + '">第' + i + '页</option>').attr("disabled", true).appendTo(select);
+				}
+				box.appendTo("body");
+			}
+			manga.update_image_select_box(manga.current_page);
+		},
+		update_image_select_box: function(page) {
+			if (page !== undefined) {
+				manga.image_select_box.find("option[value='" + page + "']").attr("disabled", false);
+			}
+			manga.image_select_box.find("select").val(manga.current_page);
 		},
 		show_next_chapter_box: function() {
 			var box = manga.next_chapter_box;
