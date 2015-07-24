@@ -3,7 +3,7 @@
 // @description   Load all manga in current page, only available on dm5.com
 // @author        Shiaupiau (https://github.com/stu43005)
 // @include       http://*.dm5.com/*
-// @version       1.0.6
+// @version       1.0.7
 // ==/UserScript==
 
 (function(func) {
@@ -22,11 +22,17 @@
 		in_animate: false,
 		init: function() {
 			manga.addStyle(".manga_image{box-sizing:border-box;padding:1px!important;border:2px solid gray!important;margin:0 auto 10px!important;display:block!important;max-width:99%!important;width:auto!important;height:auto!important;cursor:pointer;}#next_chapter_box{background:#333;position:fixed;top:50%;left:50%;margin:0;z-index:999999;padding:20px;color:#fff;font-size:16px;box-shadow:0 0 15px #000;border-radius:5px;}#next_chapter_box a{color:#FF4E00;cursor:pointer;}#next_chapter_box .close{position:absolute;top:5px;right:5px;font-size:12px;}");
+
 			manga.container = $(manga.selector);
 			manga.container.find("#imgloading").remove();
 			manga.replace_origin_image();
 
-			$(document).scroll(manga.onscroll).unbind("keypress").keypress(manga.onkeypress);
+			$(document)
+				.scroll(manga.onscroll)
+				.unbind("keypress")
+				.keypress(manga.onkeypress)
+				.keyup(manga.onkeyup);
+
 			window.addEventListener('popstate', function(e) {
 				if (history.state) {
 					console.log(e.state);
@@ -172,6 +178,11 @@
 				case 120: // x
 					manga.jump_next(index);
 					break;
+			}
+		},
+		onkeyup: function(e) {
+			if (e.keyCode == 27) { // esc
+				manga.hide_next_chapter_box();
 			}
 		},
 		bodyAnimate: function(animate, time) {
