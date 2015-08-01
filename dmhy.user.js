@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name       Dmhy 動漫花園
-// @version    0.1.2
-// @match      http://share.dmhy.org/*
+// @version    0.1.3
+// @match      *://share.dmhy.org/*
 // @require    http://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js
 // @grant      none
 // ==/UserScript==
