@@ -1,42 +1,72 @@
 // images from http://anohito.tw/sandbox/negi/
 
-// plurk canvas_snow script: https://gist.github.com/stu43005/c040c6371d22ac503614
-(function(file){
-  var script=document.createElement('script');
-  script.type='text/javascript';
-  script.src=file;
-  document.body.appendChild(script);
-})("https://cdn.rawgit.com/stu43005/c040c6371d22ac503614/raw/plurk.canvas_snow.js");
-(function(file){
-  jQuery.get(file, function(data) {
-    var style = document.createElement('style');
-    style.innerHTML = data;
-    document.head.appendChild(style);
-  });
-})("https://cdn.rawgit.com/stu43005/c040c6371d22ac503614/raw/plurk.canvas_snow.css");
-
 jQuery(document).ready(function($) {
-	if (typeof canvas_snow == "undefined") {
-		return setTimeout(arguments.callee.bind($, $), 1000);
+	function init() {
+		if (typeof canvas_snow == "undefined") {
+			// plurk canvas_snow script: https://gist.github.com/stu43005/c040c6371d22ac503614
+			(function(file){
+				var script = document.createElement('script');
+				script.type = 'text/javascript';
+				script.src = file;
+				script.onload = function() {
+					setTimeout(function() {
+						init();
+					}, 1000);
+				};
+				document.body.appendChild(script);
+			})("https://cdn.rawgit.com/stu43005/c040c6371d22ac503614/raw/plurk.canvas_snow.js");
+
+			(function(file){
+				jQuery.get(file, function(data) {
+					var style = document.createElement('style');
+					style.innerHTML = data;
+					document.head.appendChild(style);
+				});
+			})("https://cdn.rawgit.com/stu43005/c040c6371d22ac503614/raw/plurk.canvas_snow.css");
+
+			return;
+		}
+
+		if (!$("body").hasClass("timeline") || !isCanvasSupported()) {
+			return;
+		}
+
+		window.negi_orientation = parseOrientationValue(document.cookie.replace(/(?:(?:^|.*;\s*)negio\s*\=\s*([^;]*).*$)|^.*$/, "$1"));
+
+		if (document.cookie.replace(/(?:(?:^|.*;\s*)negip\s*\=\s*([^;]*).*$)|^.*$/, "$1") !== "true") {
+			window.negi_origin = false;
+		} else {
+			window.negi_origin = true;
+		}
+		showIcon();
+
+		canvas_snow.images = parseCookieValue(document.cookie.replace(/(?:(?:^|.*;\s*)negii\s*\=\s*([^;]*).*$)|^.*$/, "$1"));
+		if (!canvas_snow.images) {
+			restoreDefultImages();
+		}
+
+		updateImagesDOM();
+
+		overrideSnowFunction();
+
+		addSettingLink();
 	}
 
-	if (!$("body").hasClass("timeline") || !isCanvasSupported()) {
-		return
-	}
+	init();
 
-	var restoreDefultImages = function restoreDefultImages() {
+	function restoreDefultImages() {
 		saveImages($.map([1,2,3,4,5,6], function(e) {
-			return "http://anohito.tw/sandbox/negi/negi" + e + ".png"
+			return "http://anohito.tw/sandbox/negi/negi" + e + ".png";
 		}));
-	};
+	}
 
-	var updateImagesDOM = function updateImagesDOM() {
+	function updateImagesDOM() {
 		canvas_snow.imagesDOM = $.map(canvas_snow.images, function(e) {
 			return $("<img/>").attr('src', e).get(0);
 		});
-	};
+	}
 
-	var saveImages = function saveImages(imgs) {
+	function saveImages(imgs) {
 		canvas_snow.images = imgs;
 
 		// save image setting to cookie
@@ -45,15 +75,15 @@ jQuery(document).ready(function($) {
 
 		updateImagesDOM();
 		restartSnow();
-	};
+	}
 
-	var restartSnow = function restartSnow() {
+	function restartSnow() {
 		window.cancelAnimationFrame(canvas_snow.aniID);
 		window.clearTimeout(canvas_snow.aniID);
 		canvas_snow.init(true);
-	};
+	}
 
-	var showIcon = function showIcon() {
+	function showIcon() {
 		if (window.negi_origin) {
 			$(".snowflake").text("❄");
 		} else {
@@ -61,7 +91,7 @@ jQuery(document).ready(function($) {
 		}
 	}
 
-	var parseOrientationValue = function parseOrientationValue(s) {
+	function parseOrientationValue(s) {
 		if (s === "true") {
 			// old checkbox setting
 			return 2;
@@ -71,10 +101,10 @@ jQuery(document).ready(function($) {
 			return 0;
 		}
 		return i;
-	};
+	}
 
 	// this function code from https://github.com/carhartl/jquery-cookie
-	var parseCookieValue = function parseCookieValue(s) {
+	function parseCookieValue(s) {
 		if (s.indexOf('"') === 0) {
 			// This is a quoted cookie as according to RFC2068, unescape...
 			s = s.slice(1, -1).replace(/\\"/g, '"').replace(/\\\\/g, '\\');
@@ -87,150 +117,138 @@ jQuery(document).ready(function($) {
 			s = decodeURIComponent(s.replace(/\+/g, ' '));
 			return JSON.parse(s);
 		} catch(e) {}
-	};
-
-	window.negi_orientation = parseOrientationValue(document.cookie.replace(/(?:(?:^|.*;\s*)negio\s*\=\s*([^;]*).*$)|^.*$/, "$1"));
-
-	if (document.cookie.replace(/(?:(?:^|.*;\s*)negip\s*\=\s*([^;]*).*$)|^.*$/, "$1") !== "true") {
-		window.negi_origin = false;
-	} else {
-		window.negi_origin = true;
-	}
-	showIcon();
-
-	canvas_snow.images = parseCookieValue(document.cookie.replace(/(?:(?:^|.*;\s*)negii\s*\=\s*([^;]*).*$)|^.*$/, "$1"));
-	if (!canvas_snow.images) {
-		restoreDefultImages();
 	}
 
-	updateImagesDOM();
-
-	canvas_snow.snow = function() {
-		var j = canvas_snow;
-		var q = j.ctx;
-		var e = j.cv;
-		q.clearRect(0, 0, e.width, e.height);
-		for (var d = 0; d < j.flakeCount; d++) {
-			var f = j.flakes[d],
-				n = j.mX,
-				m = j.mY,
-				o = 100,
-				b = f.x,
-				l = f.y;
-			var h = Math.sqrt((b - n) * (b - n) + (l - m) * (l - m)),
-				s = b - n,
-				p = l - m;
-			if (h < o) {
-				var c = o / (h * h),
-					a = (n - b) / h,
-					r = (m - l) / h,
-					g = c / 2;
-				f.velX -= g * a;
-				f.velY -= g * r
-			} else {
-				f.velX *= 0.98;
-				if (f.velY <= f.speed) {
-					f.velY = f.speed
+	function overrideSnowFunction() {
+		canvas_snow.snow = function() {
+			var j = canvas_snow;
+			var q = j.ctx;
+			var e = j.cv;
+			q.clearRect(0, 0, e.width, e.height);
+			for (var d = 0; d < j.flakeCount; d++) {
+				var f = j.flakes[d],
+					n = j.mX,
+					m = j.mY,
+					o = 100,
+					b = f.x,
+					l = f.y;
+				var h = Math.sqrt((b - n) * (b - n) + (l - m) * (l - m)),
+					s = b - n,
+					p = l - m;
+				if (h < o) {
+					var c = o / (h * h),
+						a = (n - b) / h,
+						r = (m - l) / h,
+						g = c / 2;
+					f.velX -= g * a;
+					f.velY -= g * r
+				} else {
+					f.velX *= 0.98;
+					if (f.velY <= f.speed) {
+						f.velY = f.speed
+					}
+					f.velX += Math.cos(f.step += 0.05) * f.stepSize
 				}
-				f.velX += Math.cos(f.step += 0.05) * f.stepSize
+				switch (window.negi_orientation) {
+					case 0:
+						f.y += f.velY;
+						f.x += f.velX;
+						break;
+					case 1:
+						f.y -= f.velY;
+						f.x += f.velX;
+						break;
+					case 2:
+						f.y += f.velX;
+						f.x += f.velY;
+						break;
+					case 3:
+						f.y += f.velX;
+						f.x -= f.velY;
+						break;
+				}
+				if (f.y >= e.height || f.y <= 0) {
+					j.resetFlake(f)
+				}
+				if (f.x >= e.width || f.x <= 0) {
+					j.resetFlake(f)
+				}
+				if (window.negi_origin) {
+					q.fillStyle = "rgba(255,255,255," + f.opacity + ")";
+					q.beginPath();
+					q.arc(f.x, f.y, f.size, 0, Math.PI * 2);
+					q.fill();
+				} else {
+					if (!f.type) {
+						f.type = Math.floor(Math.random() * j.imagesDOM.length);
+					}
+					q.drawImage(j.imagesDOM[f.type], f.x, f.y);
+				}
 			}
+			j.aniID = requestAnimationFrame(j.snow)
+		};
+
+		canvas_snow.resetFlake = function(a) {
 			switch (window.negi_orientation) {
 				case 0:
-					f.y += f.velY;
-					f.x += f.velX;
+					a.x = Math.floor(Math.random() * canvas_snow.cv.width);
+					a.y = 0;
 					break;
 				case 1:
-					f.y -= f.velY;
-					f.x += f.velX;
+					a.x = Math.floor(Math.random() * canvas_snow.cv.width);
+					a.y = canvas_snow.cv.height;
 					break;
 				case 2:
-					f.y += f.velX;
-					f.x += f.velY;
+					a.x = 0;
+					a.y = Math.floor(Math.random() * canvas_snow.cv.height);
 					break;
 				case 3:
-					f.y += f.velX;
-					f.x -= f.velY;
+					a.x = canvas_snow.cv.width;
+					a.y = Math.floor(Math.random() * canvas_snow.cv.height);
 					break;
 			}
-			if (f.y >= e.height || f.y <= 0) {
-				j.resetFlake(f)
-			}
-			if (f.x >= e.width || f.x <= 0) {
-				j.resetFlake(f)
-			}
-			if (window.negi_origin) {
-				q.fillStyle = "rgba(255,255,255," + f.opacity + ")";
-				q.beginPath();
-				q.arc(f.x, f.y, f.size, 0, Math.PI * 2);
-				q.fill();
-			} else {
-				if (!f.type) {
-					f.type = Math.floor(Math.random() * j.imagesDOM.length);
-				}
-				q.drawImage(j.imagesDOM[f.type], f.x, f.y);
-			}
-		}
-		j.aniID = requestAnimationFrame(j.snow)
-	};
+			a.size = (Math.random() * 2.5) + 2;
+			a.speed = (Math.random() * 0.6) + 0.2;
+			a.velY = a.speed;
+			a.velX = 0;
+			a.opacity = (Math.random() * 0.5) + 0.3;
+			a.type = undefined;
+		};
+	}
 
-	canvas_snow.resetFlake = function(a) {
-		switch (window.negi_orientation) {
-			case 0:
-				a.x = Math.floor(Math.random() * canvas_snow.cv.width);
-				a.y = 0;
-				break;
-			case 1:
-				a.x = Math.floor(Math.random() * canvas_snow.cv.width);
-				a.y = canvas_snow.cv.height;
-				break;
-			case 2:
-				a.x = 0;
-				a.y = Math.floor(Math.random() * canvas_snow.cv.height);
-				break;
-			case 3:
-				a.x = canvas_snow.cv.width;
-				a.y = Math.floor(Math.random() * canvas_snow.cv.height);
-				break;
-		}
-		a.size = (Math.random() * 2.5) + 2;
-		a.speed = (Math.random() * 0.6) + 0.2;
-		a.velY = a.speed;
-		a.velX = 0;
-		a.opacity = (Math.random() * 0.5) + 0.3;
-		a.type = undefined;
-	};
+	function addSettingLink() {
+		$(".snowflake").bind("contextmenu", function(e) {
+			e.preventDefault();
+			showSettingPanel();
+		});
 
-	$(".snowflake").bind("contextmenu", function(e) {
-		e.preventDefault();
-		showSettingPanel();
-	});
-
-	$("#top_bar .bar-block.right .pulldown .menu ul a[href*='/Settings/show?page=theme']").parent().after($("<li/>", {
-		"class": "sep"
-	}), $("<li/>", {
-		"class": "nohover",
-		html: $("<div/>", {
-			html: $("<i/>", {
-				css: {
-					color: "#aaa"
-				},
-				text: "Plurk Negi"
+		$("#top_bar .bar-block.right .pulldown .menu ul a[href*='/Settings/show?page=theme']").parent().after($("<li/>", {
+			"class": "sep"
+		}), $("<li/>", {
+			"class": "nohover",
+			html: $("<div/>", {
+				html: $("<i/>", {
+					css: {
+						color: "#aaa"
+					},
+					text: "Plurk Negi"
+				})
 			})
-		})
-	}), $("<li/>", {
-		html: $("<a/>", {
-			text: "變更圖片及方向",
-			click: function() {
-				showSettingPanel();
-			}
-		})
-	}));
+		}), $("<li/>", {
+			html: $("<a/>", {
+				text: "變更圖片及方向",
+				click: function() {
+					showSettingPanel();
+				}
+			})
+		}));
+	}
 
-	var removeSettingPanel = function removeSettingPanel() {
+	function removeSettingPanel() {
 		$("#plurk_negi_setting_overlay, #plurk_negi_setting").remove();
 	}
 
-	var showSettingPanel = function showSettingPanel() {
+	function showSettingPanel() {
 		removeSettingPanel();
 
 		$("<div/>", {
@@ -321,7 +339,7 @@ jQuery(document).ready(function($) {
 									saveImages($.map($("#plurk_negi_setting_images input:text"), function(e) {
 										return $(e).val().trim();
 									}).filter(function(e) {
-										return e != "";
+										return e !== "";
 									}));
 								}
 							}), $("<input/>", {
@@ -362,11 +380,11 @@ jQuery(document).ready(function($) {
 										text: e
 									})
 								]
-							})
+							});
 						}))
 					})
 				]
 			})
 		}).appendTo("body");
-	};
+	}
 });
