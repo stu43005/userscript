@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name       My Plurk Bookmark.
-// @version    1.0
+// @version    1.1
 // @match      http://www.plurk.com/*
 // @match      https://www.plurk.com/*
 // @require    https://ajax.googleapis.com/ajax/libs/jquery/2.1.4/jquery.min.js
@@ -26,3 +26,20 @@ function main(e) {
 }
 
 $("#timeline_holder").on("mouseover", ".plurk", main);
+
+// 單噗頁面
+if ($(".bigplurk").length > 0) {
+	$(".bigplurk .controls").append($("<span/>", {
+		id: "bookmark_plurk",
+		"class": "s_False",
+		html: $("<a/>", {
+			"class": "do",
+			href: "#",
+			text: "書籤",
+			click: function() {
+				var pid = $(".bigplurk").data("pid").toString(36);
+				return popUp("http://140.116.249.88/oauth/plurk/plurkBookmark.php?func=add&pid=" + pid, 1110, 400);
+			}
+		})
+	}));
+}
