@@ -1,7 +1,7 @@
 jQuery(function($) {
 	if (!$("body").hasClass("timeline")) return;
 
-	function load_clique_timeline(clique) {
+	function loadCliqueTimeline(clique) {
 		var ids = PlurkAdder._getCliqueFriends(PlurkAdder._getCliqueByName(clique));
 		TimeLine.reset(true);
 		TimeLine.showLoading();
@@ -35,12 +35,14 @@ jQuery(function($) {
 	}
 
 	function onCliqueChange(c) {
-		selected = c;
-		tab.find("span").text(c);
-		menu.hide();
-		if (tab.hasClass("filter_selected")) {
-			load_clique_timeline(selected);
+		if (selected != c) {
+			selected = c;
+			tab.find("span").text(c);
 		}
+		menu.hide();
+		$("#filter_tab .filter_selected").addClass("off_tab").removeClass("filter_selected bottom_line_bg");
+		tab.removeClass("off_tab").addClass("filter_selected bottom_line_bg");
+		loadCliqueTimeline(selected);
 	}
 
 	var tab = null;
@@ -79,10 +81,7 @@ jQuery(function($) {
 				var offset = tab.offset();
 				menu.toggle(tab.get(0));
 			} else {
-				$("#filter_tab .filter_selected").addClass("off_tab").removeClass("filter_selected bottom_line_bg");
-				tab.removeClass("off_tab").addClass("filter_selected bottom_line_bg");
-				menu.hide();
-				load_clique_timeline(selected);
+				onCliqueChange(selected);
 			}
 		}
 	})));
