@@ -1,4 +1,6 @@
 jQuery(function($) {
+	if (!$("body").hasClass("timeline")) return;
+
 	function load_clique_timeline(clique) {
 		var ids = PlurkAdder._getCliqueFriends(PlurkAdder._getCliqueByName(clique));
 		TimeLine.reset(true);
