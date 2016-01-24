@@ -1,10 +1,17 @@
 jQuery(function($) {
 	if (!$("body").hasClass("timeline")) return;
 
+	var loadingMessageTmpl = Handlebars.compile("<div>已讀取{{done}}，共{{count}}人</div>");
+
 	function loadCliqueTimeline(clique) {
 		var ids = PlurkAdder._getCliqueFriends(PlurkAdder._getCliqueByName(clique));
 		TimeLine.reset(true);
 		TimeLine.showLoading();
+		var cnt = {
+			done: 0,
+			count: ids.length
+		};
+		var mes = $(loadingMessageTmpl(cnt)).appendTo("#timeline_holder #div_loading .cnt");
 		Promise.all(ids.map(function(id) {
 			var d = {
 				user_id: id,
@@ -25,11 +32,20 @@ jQuery(function($) {
 					}
 				});
 				b.sendReq(d);
+			}).then(function(plurks) {
+				cnt.done++;
+				mes.remove();
+				mes = $(loadingMessageTmpl(cnt)).appendTo("#timeline_holder #div_loading .cnt");
+				return plurks;
 			});
 		})).then(function(values) {
 			return [].concat.apply([], values);
 		}).then(function(c) {
 			TimeLine.insertPlurks(c);
+			TimeLine.hideLoading();
+		}).catch(function(e) {
+			console.error("load clique imeline error:", e);
+			alert("好像有點怪怪的:(");
 			TimeLine.hideLoading();
 		});
 	}
