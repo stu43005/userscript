@@ -3,7 +3,7 @@
 // @description   Load all manga in current page, only available on dm5.com
 // @author        Shiaupiau (https://github.com/stu43005)
 // @include       http://*.dm5.com/*
-// @version       1.1
+// @version       1.1.1
 // ==/UserScript==
 
 (function(func) {
@@ -413,7 +413,7 @@
 					url: DM5_CURL_END,
 					dataType: 'html',
 					success: function(data) {
-						var link = $(".end_top", data).find("a").filter(function(i, a) {
+						var link = $(".topBar a", data).filter(function(i, a) {
 							return a.href && a.href.match(/\/m\d+\//g);
 						}).get(0);
 						manga.next_chapter_url = link ? link.href : null;
