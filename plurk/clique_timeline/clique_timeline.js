@@ -53,35 +53,47 @@ jQuery(function($) {
 	function onCliqueChange(c) {
 		if (selected != c) {
 			selected = c;
-			tab.find("span").text(c);
+			tab.find("i:first").removeClass(CLIQUES_DEFAULT_ICON.join(" ")).addClass(selected.icon);
+			tab.find("span").text(selected.name);
 		}
 		menu.hide();
 		$("#filter_tab .filter_selected").addClass("off_tab").removeClass("filter_selected bottom_line_bg");
 		tab.removeClass("off_tab").addClass("filter_selected bottom_line_bg");
-		loadCliqueTimeline(selected);
+		loadCliqueTimeline(selected.name);
+		return false;
 	}
 
 	var tab = null;
 	var selected = null;
 
+	var CLIQUES_DEFAULT_ICON = ["pif-colleague-circle", "pif-classmates-circle", "pif-like-circle", "pif-clique"];
 	var menuView = $("<ul/>").append(CLIQUES.map(function(c) {
 		var b = c.name;
+		var ic = "pif-clique";
 		var a = CLIQUES_DEFAULT.indexOf(b);
 		if (a > -1) {
 			b = CLIQUES_DEFAULT_TRANS[a];
+			ic = CLIQUES_DEFAULT_ICON[a];
 		}
 		return {
 			name: b,
-			count: PlurkAdder._getCliqueFriends(c).length
+			count: PlurkAdder._getCliqueFriends(c).length,
+			icon: ic
 		};
 	}).filter(function(c) {
 		return c.count > 0;
 	}).map(function(c) {
-		return $("<li>" + c.name + " (" + c.count + "人)</li>").bind("click", onCliqueChange.bind(null, c.name));
+		return $("<li/>", {
+			html: $("<a/>", {
+				"class": c.icon,
+				href: "#",
+				text: c.name + " (" + c.count + "人)"
+			}).bind("click", onCliqueChange.bind(null, c))
+		});
 	}));
 	var menu = new PopView({
 		content: menuView,
-		ex_class: "clique_menu"
+		ex_class: "popMenu clique_menu"
 	});
 
 	$("#filter_tab").append($("<li/>").html(tab = $("<a/>", {
@@ -100,5 +112,5 @@ jQuery(function($) {
 		}
 	})));
 
-	$("head").append($("<style type=\"text/css\"/>").text("#clique_plurks_tab_btn span { margin-right: 4px; } .clique_menu li { white-space: nowrap; font-size: 13px; line-height: 13px; padding: 6px 12px; text-align: center; cursor: pointer; } .clique_menu li:hover { background-color: #EEE; }"));
+	$("head").append($("<style type=\"text/css\"/>").text("#clique_plurks_tab_btn span { margin-right: 4px; }"));
 });
