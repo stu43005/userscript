@@ -3,8 +3,57 @@ jQuery(function($) {
 
 	var loadingMessageTmpl = Handlebars.compile("<div>已讀取{{done}}，共{{count}}人</div>");
 
+	var lastTimes = [];
+
+	function setLastTime(id, time) {
+		var index = lastTimes.findIndex(function(t) {
+			return t.id == id;
+		});
+		if (index > -1) {
+			lastTimes[index].time = time;
+		} else {
+			lastTimes.push({
+				id: id,
+				time: time
+			});
+		}
+	}
+
+	function getPlurks(id, offset) {
+		var d = {
+			user_id: id,
+			user_ids: JSON.stringify([id])
+		};
+		if (offset) {
+			d.offset = offset.toISOString();
+		}
+		return new Promise(function(resolve, reject) {
+			var b = AJS.loadJSON("/TimeLine/getPlurks");
+			b.addCallback(function(g) {
+				if (!g.error) {
+					if (g.constructor == Array) {
+						resolve(g);
+					} else {
+						AJS.update(USERS, g.replurkers);
+						resolve(g.plurks);
+					}
+				} else {
+					reject(g.error);
+				}
+			});
+			b.sendReq(d);
+		}).then(function(plurks) {
+			var last = AJS.getLast(plurks);
+			if (last) {
+				setLastTime(id, last.posted);
+			}
+			return plurks;
+		});
+	}
+
 	function loadCliqueTimeline(clique) {
 		var ids = PlurkAdder._getCliqueFriends(PlurkAdder._getCliqueByName(clique));
+		lastTimes = [];
 		TimeLine.reset(true);
 		TimeLine.showLoading();
 		var cnt = {
@@ -13,26 +62,7 @@ jQuery(function($) {
 		};
 		var mes = $(loadingMessageTmpl(cnt)).appendTo("#timeline_holder #div_loading .cnt");
 		Promise.all(ids.map(function(id) {
-			var d = {
-				user_id: id,
-				user_ids: JSON.stringify([id])
-			};
-			return new Promise(function(resolve, reject) {
-				var b = AJS.loadJSON("/TimeLine/getPlurks");
-				b.addCallback(function(g) {
-					if (!g.error) {
-						if (g.constructor == Array) {
-							resolve(g);
-						} else {
-							AJS.update(USERS, g.replurkers);
-							resolve(g.plurks);
-						}
-					} else {
-						reject(g.error);
-					}
-				});
-				b.sendReq(d);
-			}).then(function(plurks) {
+			return getPlurks(id).then(function(plurks) {
 				cnt.done++;
 				mes.remove();
 				mes = $(loadingMessageTmpl(cnt)).appendTo("#timeline_holder #div_loading .cnt");
@@ -49,6 +79,26 @@ jQuery(function($) {
 			TimeLine.hideLoading();
 		});
 	}
+
+	var loadingPlurks = [];
+	$(document).bind("scrollBack", function() {
+		var b = AJS.getLast(TimeLine.active_blocks);
+		if (b) {
+			lastTimes.filter(function(t) {
+				return loadingPlurks.indexOf(t.id) == -1;
+			}).filter(function(t) {
+				return b.date_start <= t.time;
+			}).map(function(t) {
+				loadingPlurks.push(t.id);
+				return getPlurks(t.id, t.time).then(function(plurks) {
+					if (tab.hasClass("filter_selected")) {
+						TimeLine.insertPlurks(plurks);
+					}
+					loadingPlurks.splice(loadingPlurks.indexOf(t.id), 1);
+				});
+			});
+		}
+	});
 
 	function onCliqueChange(c) {
 		if (selected != c) {
@@ -113,4 +163,14 @@ jQuery(function($) {
 	})));
 
 	$("head").append($("<style type=\"text/css\"/>").text("#clique_plurks_tab_btn span { margin-right: 4px; }"));
+
+	// 取代TimeLine.scrollBack, 增加event功能
+	TimeLine.scrollBack = (function() {
+		var cached_function = TimeLine.scrollBack;
+		return function() {
+			var result = cached_function.apply(this, arguments);
+			$(document).trigger("scrollBack");
+			return result;
+		};
+	})();
 });
