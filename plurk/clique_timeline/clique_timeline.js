@@ -199,4 +199,16 @@ jQuery(function($) {
 			return result;
 		};
 	})();
+
+	// 取代TimeLine.prefetchCheck, 當此插件運作時停用功能
+	TimeLine.prefetchCheck = (function() {
+		var cached_function = TimeLine.prefetchCheck;
+		return function() {
+			if (tab.hasClass("filter_selected")) {
+				return;
+			}
+			var result = cached_function.apply(this, arguments);
+			return result;
+		};
+	})();
 });
