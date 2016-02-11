@@ -6,6 +6,28 @@ jQuery(function($) {
 	var lastTimes = [];
 	var cachedPlurks = [];
 
+	var CliqueTimeLineCache = {
+		cache: {},
+		inCache: function(a) {
+			return this.cache[this.cacheKey(a)] !== undefined;
+		},
+		get: function(a) {
+			return this.cache[this.cacheKey(a)];
+		},
+		set: function(c, b) {
+			var a = this.cacheKey(c);
+			this.cache[a] = b;
+		},
+		cacheKey: function(b) {
+			var a = [];
+			a.push(b.user_id);
+			if (b.offset) {
+				a.push(b.offset);
+			}
+			return a.join("-");
+		}
+	};
+
 	function setLastTime(id, time) {
 		var index = lastTimes.findIndex(function(t) {
 			return t.id == id;
@@ -41,14 +63,7 @@ jQuery(function($) {
 		return cache.slice(0, index);
 	}
 
-	function getPlurks(id, offset) {
-		var d = {
-			user_id: id,
-			user_ids: JSON.stringify([id])
-		};
-		if (offset) {
-			d.offset = offset.toISOString();
-		}
+	function _getPlurks(d) {
 		return new Promise(function(resolve, reject) {
 			var b = AJS.loadJSON("/TimeLine/getPlurks");
 			b.addCallback(function(g) {
@@ -64,6 +79,28 @@ jQuery(function($) {
 				}
 			});
 			b.sendReq(d);
+		});
+	}
+
+	function getPlurks(id, offset) {
+		var d = {
+			user_id: id,
+			user_ids: JSON.stringify([id])
+		};
+		if (offset) {
+			d.offset = offset.toISOString();
+		}
+		return new Promise(function(resolve, reject) {
+			if (CliqueTimeLineCache.inCache(d)) {
+				resolve(CliqueTimeLineCache.get(d));
+			} else {
+				_getPlurks(d).then(function(plurks) {
+					CliqueTimeLineCache.set(d, plurks);
+					resolve(plurks);
+				}).catch(function(e) {
+					reject(e);
+				});
+			}
 		}).then(function(plurks) {
 			var last = AJS.getLast(plurks);
 			if (last) {
