@@ -114,6 +114,7 @@ jQuery(function($) {
 		var ids = PlurkAdder._getCliqueFriends(PlurkAdder._getCliqueByName(clique));
 		lastTimes = [];
 		cachedPlurks = [];
+		loadingPlurks = false;
 		TimeLine.reset(true);
 		TimeLine.showLoading();
 		var cnt = {
@@ -144,21 +145,23 @@ jQuery(function($) {
 
 	var loadingPlurks = false;
 	$(document).bind("scrollBack", function() {
-		if (TimeLine.blocks.length > 1 && !loadingPlurks) {
+		if (isTabActive() && !loadingPlurks && TimeLine.blocks.length > 1) {
 			var b = AJS.getLast(TimeLine.blocks);
 			if (b.is_rendered) {
 				var t = getFristTime();
-				loadingPlurks = true;
-				TimeLine.showLoadingBlock();
-				getPlurks(t.id, t.time).then(function(plurks) {
-					return cachePlurkIfNeed(plurks);
-				}).then(function(plurks) {
-					if (tab.hasClass("filter_selected")) {
-						TimeLine.insertPlurks(plurks);
-					}
-					loadingPlurks = false;
-					TimeLine.removeLoadingBlock();
-				});
+				if (t !== null) {
+					loadingPlurks = true;
+					TimeLine.showLoadingBlock();
+					getPlurks(t.id, t.time).then(function(plurks) {
+						return cachePlurkIfNeed(plurks);
+					}).then(function(plurks) {
+						if (isTabActive()) {
+							TimeLine.insertPlurks(plurks);
+						}
+						loadingPlurks = false;
+						TimeLine.removeLoadingBlock();
+					});
+				}
 			}
 		}
 	});
@@ -174,6 +177,10 @@ jQuery(function($) {
 		tab.removeClass("off_tab").addClass("filter_selected bottom_line_bg");
 		loadCliqueTimeline(selected.name);
 		return false;
+	}
+
+	function isTabActive() {
+		return tab.hasClass("filter_selected");
 	}
 
 	var tab = null;
@@ -241,7 +248,7 @@ jQuery(function($) {
 	TimeLine.prefetchCheck = (function() {
 		var cached_function = TimeLine.prefetchCheck;
 		return function() {
-			if (tab.hasClass("filter_selected")) {
+			if (isTabActive()) {
 				return;
 			}
 			var result = cached_function.apply(this, arguments);
