@@ -1,6 +1,7 @@
 // ==UserScript==
 // @name           Plurk Clique Timeline
 // @namespace      Plurk
+// @version        0.1
 // @include        http://www.plurk.com/*
 // @include        https://www.plurk.com/*
 // ==/UserScript==
