@@ -185,52 +185,59 @@ jQuery(function($) {
 
 	var tab = null;
 	var selected = null;
+	var menu = null;
 
 	var CLIQUES_DEFAULT_ICON = ["pif-colleague-circle", "pif-classmates-circle", "pif-like-circle", "pif-clique"];
-	var menuView = $("<ul/>").append(CLIQUES.map(function(c) {
-		var b = c.name;
-		var ic = "pif-clique";
-		var a = CLIQUES_DEFAULT.indexOf(b);
-		if (a > -1) {
-			b = CLIQUES_DEFAULT_TRANS[a];
-			ic = CLIQUES_DEFAULT_ICON[a];
-		}
-		return {
-			name: b,
-			count: PlurkAdder._getCliqueFriends(c).length,
-			icon: ic
-		};
-	}).filter(function(c) {
-		return c.count > 0;
-	}).map(function(c) {
-		return $("<li/>", {
-			html: $("<a/>", {
-				"class": c.icon,
-				href: "#",
-				text: c.name + " (" + c.count + "人)"
-			}).bind("click", onCliqueChange.bind(null, c))
-		});
-	}));
-	var menu = new PopView({
-		content: menuView,
-		ex_class: "popMenu clique_menu"
-	});
 
-	$("#filter_tab").append($("<li/>").html(tab = $("<a/>", {
-		href: "#",
-		title: "瀏覽在小圈圈內好友的訊息",
-		id: "clique_plurks_tab_btn",
-		"class": "off_tab",
-		html: "<i class=\"pif-clique\"></i><span>小圈圈</span><i class=\"pif-dropdown\"></i>",
-		click: function(e) {
-			e.preventDefault();
-			if (selected === null || e.target.nodeName.toLowerCase() == "i") {
-				menu.showFrom(tab);
-			} else {
-				onCliqueChange(selected);
+	fetch("//www.plurk.com/Cliques/get", {
+		credentials: 'same-origin'
+	}).then(r => r.json()).then(function(CLIQUES) {
+		top.CLIQUES = CLIQUES;
+		var menuView = $("<ul/>").append(CLIQUES.map(function(c) {
+			var b = c.name;
+			var ic = "pif-clique";
+			var a = CLIQUES_DEFAULT.indexOf(b);
+			if (a > -1) {
+				b = CLIQUES_DEFAULT_TRANS[a];
+				ic = CLIQUES_DEFAULT_ICON[a];
 			}
-		}
-	})));
+			return {
+				name: b,
+				count: PlurkAdder._getCliqueFriends(c).length,
+				icon: ic
+			};
+		}).filter(function(c) {
+			return c.count > 0;
+		}).map(function(c) {
+			return $("<li/>", {
+				html: $("<a/>", {
+					"class": c.icon,
+					href: "#",
+					text: c.name + " (" + c.count + "人)"
+				}).bind("click", onCliqueChange.bind(null, c))
+			});
+		}));
+		menu = new PopView({
+			content: menuView,
+			ex_class: "popMenu clique_menu"
+		});
+
+		$("#filter_tab").append($("<li/>").html(tab = $("<a/>", {
+			href: "#",
+			title: "瀏覽在小圈圈內好友的訊息",
+			id: "clique_plurks_tab_btn",
+			"class": "off_tab",
+			html: "<i class=\"pif-clique\"></i><span>小圈圈</span><i class=\"pif-dropdown\"></i>",
+			click: function(e) {
+				e.preventDefault();
+				if (selected === null || e.target.nodeName.toLowerCase() == "i") {
+					menu.showFrom(tab);
+				} else {
+					onCliqueChange(selected);
+				}
+			}
+		})));
+	});
 
 	$("head").append($("<style type=\"text/css\"/>").text("#clique_plurks_tab_btn span { margin-right: 4px; }"));
 
