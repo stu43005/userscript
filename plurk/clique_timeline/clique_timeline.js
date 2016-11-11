@@ -1,5 +1,6 @@
 jQuery(function($) {
 	if (!$("body").hasClass("timeline")) return;
+	if (typeof TimeLine == "undefined") return;
 
 	var loadingMessageTmpl = Handlebars.compile("<div>已讀取{{done}}，共{{count}}人</div>");
 
@@ -180,6 +181,7 @@ jQuery(function($) {
 	}
 
 	function isTabActive() {
+		if (tab === null) return false;
 		return tab.hasClass("filter_selected");
 	}
 
