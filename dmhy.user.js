@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name       Dmhy 動漫花園
-// @version    0.1.3
+// @version    0.2
 // @match      *://share.dmhy.org/*
 // @require    http://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js
 // @grant      none
@@ -31,3 +31,11 @@ $("#topic_list a").filter(function(){
 });
 
 $("#topic_list tr th:nth-child(2)").attr("width","6%");
+
+// fixed load comment bug
+(function() {
+	var id = location.href.match(/topics\/view\/(\d+)/);
+	if (id && id.length == 2) {
+		$('#recent-commnet').load('/comment/recent/topic_id/' + id[1]);
+	}
+})()
