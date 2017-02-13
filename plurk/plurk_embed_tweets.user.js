@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name       Plurk embed tweets
-// @version    1.0
+// @version    1.1
 // @match      http://www.plurk.com/*
 // @match      https://www.plurk.com/*
 // @require    https://ajax.googleapis.com/ajax/libs/jquery/2.1.4/jquery.min.js
@@ -29,6 +29,22 @@ localScript(function() {
 		return t;
 	}(document, "script", "twitter-wjs"));
 
+	var TweetsCache = {
+		cache: {},
+		inCache: function(a) {
+			return this.cache[this.cacheKey(a)] !== undefined;
+		},
+		get: function(a) {
+			return this.cache[this.cacheKey(a)];
+		},
+		set: function(a, b) {
+			this.cache[this.cacheKey(a)] = b;
+		},
+		cacheKey: function(b) {
+			return b;
+		}
+	};
+
 	twttr.ready(function(twttr) {
 		jQuery("#timeline_holder").on("mouseenter", ".plurk", function(e) {
 			if (jQuery(".text_holder .tweet", this).length > 0) return;
@@ -40,17 +56,25 @@ localScript(function() {
 				if (tweetId) {
 					tweetId = tweetId[1];
 
-					var div = jQuery('<div class="tweet"/>').appendTo(jQuery(".text_holder", this));
+					var div;
+					if (TweetsCache.inCache(tweetId)) {
+						div = TweetsCache.get(tweetId);
+					} else {
+						div = jQuery('<div class="tweet"/>')
+						TweetsCache.set(tweetId, div);
 
-					/*
-					 * Scripting: Factory Functions (twttr.widgets.createTweet)
-					 * https://dev.twitter.com/web/javascript/creating-widgets#tweets
-					 */
-					twttr.widgets.createTweet(tweetId, div.get(0), {
-							conversation: 'none',
-							width: 300,
-							align: 'left'
-						});
+						/*
+						 * Scripting: Factory Functions (twttr.widgets.createTweet)
+						 * https://dev.twitter.com/web/javascript/creating-widgets#tweets
+						 */
+						twttr.widgets.createTweet(tweetId, div.get(0), {
+								conversation: 'none',
+								width: 300,
+								align: 'left'
+							});
+					}
+
+					div.appendTo(jQuery(".text_holder", this));
 					break;
 				}
 			}
