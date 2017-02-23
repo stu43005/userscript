@@ -80,6 +80,13 @@ jQuery(function($) {
 				}
 			});
 			b.sendReq(d);
+		}).then(function(plurks) {
+			plurks.forEach(function(plurk) {
+				if (typeof(plurk.posted) == "string") {
+					plurk.posted = new Date(plurk.posted);
+				}
+			});
+			return plurks;
 		});
 	}
 
