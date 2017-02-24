@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name       Plurk embed tweets
-// @version    1.2
+// @version    1.2.1
 // @match      http://www.plurk.com/*
 // @match      https://www.plurk.com/*
 // @require    https://ajax.googleapis.com/ajax/libs/jquery/2.1.4/jquery.min.js
@@ -80,7 +80,7 @@ localScript(function() {
 		if (e && ((!isMac && e.ctrlKey) || (isMac && e.metaKey)))
 			return;
 
-		warp_div.hide().remove(".tweet").data("tweetId", "");
+		warp_div.hide().removeData("tweetId").find(".tweet").remove();
 		return true;
 	}
 
