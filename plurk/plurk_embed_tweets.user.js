@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name       Plurk embed tweets
-// @version    1.2.1
+// @version    1.2.2
 // @match      http://www.plurk.com/*
 // @match      https://www.plurk.com/*
 // @require    https://ajax.googleapis.com/ajax/libs/jquery/2.1.4/jquery.min.js
@@ -46,6 +46,7 @@ localScript(function() {
 	};
 
 	var isMac = navigator.platform.match(/Mac/i);
+	var tweetLinkRegexp = /twitter.com\/\w+\/status\/(\d+)/i;
 
 	function showTweet(tweetId) {
 		var posX = (event.pageX > (jQuery(window).width() / 2)) ? "left" : "right";
@@ -102,13 +103,25 @@ localScript(function() {
 	})).appendTo("body");
 
 	twttr.ready(function(twttr) {
-		jQuery("#timeline_holder").on("mouseenter", ".plurk", function(e) {
-			var tweetLinks = jQuery(".text_holder a[href*='twitter.com']", this);
+		jQuery("#timeline_holder").on("mouseover", ".plurk", function(e) {
+			var tweetLinks = jQuery(".text_holder a", this).filter(function(index) {
+				return tweetLinkRegexp.test(this.href);
+			});
+			if (tweetLinks.index(e.target) > -1) {
+				tweetLinks = jQuery(e.target);
+			} else {
+				var lastTweet = jQuery(this).data("lastTweet");
+				if (lastTweet) {
+					showTweet(lastTweet);
+					return;
+				}
+			}
 			for (var i = 0; i < tweetLinks.length; i++) {
 				var url = tweetLinks.get(i).href;
-				var tweetId = url.match(/twitter.com\/\w+\/status\/(\d+)/i);
+				var tweetId = url.match(tweetLinkRegexp);
 				if (tweetId) {
 					tweetId = tweetId[1];
+					jQuery(this).data("lastTweet", tweetId);
 					showTweet(tweetId);
 					break;
 				}
