@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name       Plurk embed tweets
-// @version    1.2.2
+// @version    1.2.3
 // @match      http://www.plurk.com/*
 // @match      https://www.plurk.com/*
 // @require    https://ajax.googleapis.com/ajax/libs/jquery/2.1.4/jquery.min.js
@@ -103,7 +103,7 @@ localScript(function() {
 	})).appendTo("body");
 
 	twttr.ready(function(twttr) {
-		jQuery("#timeline_holder").on("mouseover", ".plurk", function(e) {
+		jQuery("#timeline_holder").add("#form_holder").on("mouseover", ".plurk", function(e) {
 			var tweetLinks = jQuery(".text_holder a", this).filter(function(index) {
 				return tweetLinkRegexp.test(this.href);
 			});
