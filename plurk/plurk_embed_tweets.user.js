@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name       Plurk embed tweets
-// @version    1.2.3
+// @version    1.2.4
 // @match      http://www.plurk.com/*
 // @match      https://www.plurk.com/*
 // @require    https://ajax.googleapis.com/ajax/libs/jquery/2.1.4/jquery.min.js
@@ -49,6 +49,9 @@ localScript(function() {
 	var tweetLinkRegexp = /twitter.com\/\w+\/status\/(\d+)/i;
 
 	function showTweet(tweetId) {
+		if (e && ((!isMac && e.ctrlKey) || (isMac && e.metaKey)))
+			return;
+
 		var posX = (event.pageX > (jQuery(window).width() / 2)) ? "left" : "right";
 
 		if (jQuery("#tweet-" + posX).data("tweetId") == tweetId)
