@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name       Plurk embed tweets
-// @version    1.2.4
+// @version    1.2.4.1
 // @match      http://www.plurk.com/*
 // @match      https://www.plurk.com/*
 // @require    https://ajax.googleapis.com/ajax/libs/jquery/2.1.4/jquery.min.js
@@ -49,9 +49,6 @@ localScript(function() {
 	var tweetLinkRegexp = /twitter.com\/\w+\/status\/(\d+)/i;
 
 	function showTweet(tweetId) {
-		if (e && ((!isMac && e.ctrlKey) || (isMac && e.metaKey)))
-			return;
-
 		var posX = (event.pageX > (jQuery(window).width() / 2)) ? "left" : "right";
 
 		if (jQuery("#tweet-" + posX).data("tweetId") == tweetId)
@@ -107,6 +104,9 @@ localScript(function() {
 
 	twttr.ready(function(twttr) {
 		jQuery("#timeline_holder").add("#form_holder").on("mouseover", ".plurk", function(e) {
+			if (e && ((!isMac && e.ctrlKey) || (isMac && e.metaKey)))
+				return;
+
 			var tweetLinks = jQuery(".text_holder a", this).filter(function(index) {
 				return tweetLinkRegexp.test(this.href);
 			});
