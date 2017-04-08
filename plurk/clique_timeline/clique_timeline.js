@@ -50,8 +50,22 @@ jQuery(function($) {
 		}, lastTimes[0]);
 	}
 
+	function _sortPlurks(d, c) {
+		var f = d.posted.getTime();
+		var e = c.posted.getTime();
+		if (f < e) {
+			return 1
+		} else {
+			if (f == e) {
+				return 0
+			} else {
+				return -1
+			}
+		}
+	}
+
 	function cachePlurkIfNeed(plurks) {
-		var cache = cachedPlurks.concat(plurks).sort(TimeLine._sortPlurks);
+		var cache = cachedPlurks.concat(plurks).sort(_sortPlurks);
 		var t = getFristTime();
 		if (t === null) {
 			cachedPlurks = [];
@@ -65,28 +79,38 @@ jQuery(function($) {
 	}
 
 	function _getPlurks(d) {
-		return new Promise(function(resolve, reject) {
-			var b = AJS.loadJSON("/TimeLine/getPlurks");
-			b.addCallback(function(g) {
-				if (!g.error) {
-					if (g.constructor == Array) {
-						resolve(g);
-					} else {
-						AJS.update(USERS, g.replurkers);
-						resolve(g.plurks);
+		return fetch("//www.plurk.com/TimeLine/getPlurks", {
+			credentials: 'same-origin',
+			method: 'POST',
+			body: (function() {
+				var params = new URLSearchParams();
+				for (let k in d) {
+					if (d.hasOwnProperty(k)) {
+						params.set(k, d[k]);
 					}
-				} else {
-					reject(g.error);
 				}
-			});
-			b.sendReq(d);
-		}).then(function(plurks) {
-			plurks.forEach(function(plurk) {
-				if (typeof(plurk.posted) == "string") {
-					plurk.posted = new Date(plurk.posted);
+				return params;
+			})()
+		}).then(function(response) {
+			var contentType = response.headers.get("content-type");
+			if (contentType && contentType.indexOf("application/json") !== -1) {
+				return response.json();
+			}
+			return JSON.parse(response.text().replace(/new\sDate\(([^\(\)]+)\)/ig, "$1"));
+		}).then(function(json) {
+			var plurks = json;
+			if (!(json instanceof Array) && json.plurks) {
+				plurks = json.plurks;
+				if (json.replurkers) {
+					Users.addUsers(json.replurkers);
 				}
-			});
+			}
+			if (json.error) {
+				throw json.error;
+			}
 			return plurks;
+		}).then(function(plurks) {
+			return plurks.map(plurk => PlurksManager.getPlurk(plurk));
 		});
 	}
 
@@ -123,8 +147,8 @@ jQuery(function($) {
 		lastTimes = [];
 		cachedPlurks = [];
 		loadingPlurks = false;
-		TimeLine.reset(true);
-		TimeLine.showLoading();
+		PlurkTimeline._instance.clear();
+		PlurkTimeline._instance.timelineHolder.setLoading(true);
 		var cnt = {
 			done: 0,
 			count: ids.length
@@ -142,34 +166,35 @@ jQuery(function($) {
 		}).then(function(c) {
 			return cachePlurkIfNeed(c);
 		}).then(function(c) {
-			TimeLine.insertPlurks(c);
-			TimeLine.hideLoading();
+			PlurkTimeline._instance.addPlurks(c);
+			PlurkTimeline._instance.timelineHolder.setLoading(false);
 		}).catch(function(e) {
 			console.error("load clique timeline error:", e);
 			alert("好像有點怪怪的:(");
-			TimeLine.hideLoading();
+			PlurkTimeline._instance.timelineHolder.setLoading(false);
 		});
 	}
 
 	var loadingPlurks = false;
-	$(document).bind("scrollBack", function() {
-		if (isTabActive() && !loadingPlurks && TimeLine.blocks.length > 1) {
-			var b = AJS.getLast(TimeLine.blocks);
-			if (b.is_rendered) {
-				var t = getFristTime();
-				if (t !== null) {
-					loadingPlurks = true;
-					TimeLine.showLoadingBlock();
-					getPlurks(t.id, t.time).then(function(plurks) {
-						return cachePlurkIfNeed(plurks);
-					}).then(function(plurks) {
-						if (isTabActive()) {
-							TimeLine.insertPlurks(plurks);
-						}
-						loadingPlurks = false;
-						TimeLine.removeLoadingBlock();
-					});
-				}
+	document.addEventListener("CliqueOnScrollEnd", function(e) {
+		if (isTabActive()) {
+			// 切換到小圈圈時，禁用原本的功能
+			e.preventDefault();
+		}
+		if (isTabActive() && !loadingPlurks && /* arg0 */ e.detail[0] == 2) {
+			var t = getFristTime();
+			if (t !== null) {
+				loadingPlurks = true;
+				PlurkTimeline._instance.timelineHolder.setLoading(true);
+				getPlurks(t.id, t.time).then(function(plurks) {
+					return cachePlurkIfNeed(plurks);
+				}).then(function(plurks) {
+					if (isTabActive()) {
+						PlurkTimeline._instance.addPlurks(plurks);
+					}
+					loadingPlurks = false;
+					PlurkTimeline._instance.timelineHolder.setLoading(false);
+				});
 			}
 		}
 	});
@@ -198,77 +223,79 @@ jQuery(function($) {
 
 	var CLIQUES_DEFAULT_ICON = ["pif-colleague-circle", "pif-classmates-circle", "pif-like-circle", "pif-clique"];
 
-	fetch("//www.plurk.com/Cliques/get", {
-		credentials: 'same-origin'
-	}).then(r => r.json()).then(function(CLIQUES) {
-		top.CLIQUES = CLIQUES;
-		var menuView = $("<ul/>").append(CLIQUES.map(function(c) {
-			var b = c.name;
-			var ic = "pif-clique";
-			var a = CLIQUES_DEFAULT.indexOf(b);
-			if (a > -1) {
-				b = CLIQUES_DEFAULT_TRANS[a];
-				ic = CLIQUES_DEFAULT_ICON[a];
-			}
-			return {
-				name: b,
-				count: PlurkAdder._getCliqueFriends(c).length,
-				icon: ic
-			};
-		}).filter(function(c) {
-			return c.count > 0;
-		}).map(function(c) {
-			return $("<li/>", {
-				html: $("<a/>", {
-					"class": c.icon,
-					href: "#",
-					text: c.name + " (" + c.count + "人)"
-				}).bind("click", onCliqueChange.bind(null, c))
+	window.plurkTimelineReady(function() {
+		fetch("//www.plurk.com/Cliques/get", {
+			credentials: 'same-origin'
+		}).then(r => r.json()).then(function(CLIQUES) {
+			top.CLIQUES = CLIQUES;
+			var menuView = $("<ul/>").append(CLIQUES.map(function(c) {
+				var b = c.name;
+				var ic = "pif-clique";
+				var a = CLIQUES_DEFAULT.indexOf(b);
+				if (a > -1) {
+					b = CLIQUES_DEFAULT_TRANS[a];
+					ic = CLIQUES_DEFAULT_ICON[a];
+				}
+				return {
+					name: b,
+					count: PlurkAdder._getCliqueFriends(c).length,
+					icon: ic
+				};
+			}).filter(function(c) {
+				return c.count > 0;
+			}).map(function(c) {
+				return $("<li/>", {
+					html: $("<a/>", {
+						"class": c.icon,
+						href: "#",
+						text: c.name + " (" + c.count + "人)"
+					}).bind("click", onCliqueChange.bind(null, c))
+				});
+			}));
+			menu = new PopView({
+				content: menuView,
+				ex_class: "popMenu clique_menu"
 			});
-		}));
-		menu = new PopView({
-			content: menuView,
-			ex_class: "popMenu clique_menu"
+
+			$("#filter_tab").append($("<li/>").html(tab = $("<a/>", {
+				href: "#",
+				title: "瀏覽在小圈圈內好友的訊息",
+				id: "clique_plurks_tab_btn",
+				"class": "off_tab",
+				html: "<i class=\"pif-clique\"></i><span>小圈圈</span><i class=\"pif-dropdown\"></i>",
+				click: function(e) {
+					e.preventDefault();
+					if (selected === null || e.target.nodeName.toLowerCase() == "i") {
+						menu.showFrom(tab);
+					} else {
+						onCliqueChange(selected);
+					}
+				}
+			})));
 		});
 
-		$("#filter_tab").append($("<li/>").html(tab = $("<a/>", {
-			href: "#",
-			title: "瀏覽在小圈圈內好友的訊息",
-			id: "clique_plurks_tab_btn",
-			"class": "off_tab",
-			html: "<i class=\"pif-clique\"></i><span>小圈圈</span><i class=\"pif-dropdown\"></i>",
-			click: function(e) {
-				e.preventDefault();
-				if (selected === null || e.target.nodeName.toLowerCase() == "i") {
-					menu.showFrom(tab);
-				} else {
-					onCliqueChange(selected);
-				}
-			}
-		})));
+		PlurkTimeline._instance.timelineHolder.onScrollEnd = after(PlurkTimeline._instance.timelineHolder.onScrollEnd, "CliqueOnScrollEnd");
 	});
 
 	$("head").append($("<style type=\"text/css\"/>").text("#clique_plurks_tab_btn span { margin-right: 4px; }"));
 
-	// 取代TimeLine.scrollBack, 增加event功能
-	TimeLine.scrollBack = (function() {
-		var cached_function = TimeLine.scrollBack;
-		return function() {
-			var result = cached_function.apply(this, arguments);
-			$(document).trigger("scrollBack");
-			return result;
-		};
-	})();
+	function trigger(name, data) {
+		var event = new CustomEvent(name, {
+			"detail": data,
+			"cancelable": true
+		});
+		return document.dispatchEvent(event);
+	}
 
-	// 取代TimeLine.prefetchCheck, 當此插件運作時停用功能
-	TimeLine.prefetchCheck = (function() {
-		var cached_function = TimeLine.prefetchCheck;
-		return function() {
-			if (isTabActive()) {
-				return;
+	function after(target, name) {
+		return new Proxy(target, {
+			apply: function(target, thisArg, argumentsList) {
+				if (!trigger(name, argumentsList)) {
+					return;
+				}
+				var result = target.apply(thisArg, argumentsList);
+				return result;
 			}
-			var result = cached_function.apply(this, arguments);
-			return result;
-		};
-	})();
+		});
+	}
 });
