@@ -223,6 +223,15 @@ jQuery(function($) {
 
 	var CLIQUES_DEFAULT_ICON = ["pif-colleague-circle", "pif-classmates-circle", "pif-like-circle", "pif-clique"];
 
+	// include plurkTimelineReady
+	(function(i,s,o,g,r,a,m){i[r]=i[r]||function(f){
+	(i[r].q=i[r].q||[]).push(f)};a=s.createElement(o),
+	m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;
+	m.parentNode.insertBefore(a,m)})(window,document,
+	'script','//rawgit.com/stu43005/8cc372297129b03a'+
+	'60d4b436de71d798/raw/getPlurkTimelineInstance.js',
+	'plurkTimelineReady');
+
 	window.plurkTimelineReady(function() {
 		fetch("//www.plurk.com/Cliques/get", {
 			credentials: 'same-origin'
