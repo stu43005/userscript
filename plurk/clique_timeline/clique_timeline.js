@@ -2,7 +2,7 @@ jQuery(function($) {
 	if (!$("body").hasClass("timeline")) return;
 	if (typeof TimeLine == "undefined") return;
 
-	var loadingMessageTmpl = Handlebars.compile("<div>已讀取{{done}}，共{{count}}人</div>");
+	var loadingMessageTmpl = Handlebars.compile("<div class=\"message\">已讀取{{done}}，共{{count}}人</div>");
 
 	var lastTimes = [];
 	var cachedPlurks = [];
@@ -153,12 +153,12 @@ jQuery(function($) {
 			done: 0,
 			count: ids.length
 		};
-		var mes = $(loadingMessageTmpl(cnt)).appendTo("#timeline_holder #div_loading .cnt");
+		$(loadingMessageTmpl(cnt)).appendTo("#timeline_holder #div_loading .cnt");
 		Promise.all(ids.map(function(id) {
 			return getPlurks(id).then(function(plurks) {
 				cnt.done++;
-				mes.remove();
-				mes = $(loadingMessageTmpl(cnt)).appendTo("#timeline_holder #div_loading .cnt");
+				$("#timeline_holder #div_loading .cnt .message").remove();
+				$(loadingMessageTmpl(cnt)).appendTo("#timeline_holder #div_loading .cnt");
 				return plurks;
 			});
 		})).then(function(values) {
@@ -166,6 +166,7 @@ jQuery(function($) {
 		}).then(function(c) {
 			return cachePlurkIfNeed(c);
 		}).then(function(c) {
+			$("#timeline_holder #div_loading .cnt .message").remove();
 			PlurkTimeline._instance.addPlurks(c);
 			PlurkTimeline._instance.timelineHolder.setLoading(false);
 		}).catch(function(e) {
