@@ -1,14 +1,16 @@
 // ==UserScript==
 // @name       Plurk 避免按到使用者名稱
-// @version    1.2.2
+// @version    1.2.3
 // @match      http://www.plurk.com/*
 // @match      https://www.plurk.com/*
 // @require    https://ajax.googleapis.com/ajax/libs/jquery/2.1.4/jquery.min.js
 // @require    https://rawgit.com/stu43005/localscript/master/index.js
-// @run-at document-end
+// @run-at     document-end
 // ==/UserScript==
 
 localScript(function() {
+	if (window != top) return;
+
 	(function($) {
 		window.PlurkElement.generate = new Proxy(window.PlurkElement.generate, {
 			apply: function(target, thisArg, argumentsList) {
