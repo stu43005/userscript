@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Screeps adaptation zoom
 // @namespace    https://screeps.com/
-// @version      0.1.0
+// @version      0.1.1
 // @author       Shiaupiau
 // @include      https://screeps.com/a/
 // @run-at       document-ready
@@ -10,7 +10,16 @@
 // ==/UserScript==
 
 $(document).ready(() => {
-	ScreepsAdapter.onRoomChange(function (roomName) {
+	ScreepsAdapter.onViewChange(function(triggerName) {
+		if (triggerName == 'roomEntered') {
+			adaptationZoom();
+		}
+	});
+	ScreepsAdapter.onRoomChange(function(roomName) {
+		adaptationZoom();
+	});
+
+	function adaptationZoom() {
 		var gameFieldContainerElem = angular.element('.game-field-container');
 		var gameFieldElem = angular.element('.game-field');
 		var resizePlaceholderElem = angular.element('.resize-placeholder');
@@ -25,5 +34,5 @@ $(document).ready(() => {
 		var toZoom = toWidth / containerWidth * 100;
 
 		roomScope.Room.zoom = toZoom;
-	});
+	}
 });
