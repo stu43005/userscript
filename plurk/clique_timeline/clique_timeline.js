@@ -237,6 +237,7 @@ jQuery(function($) {
 		fetch("//www.plurk.com/Cliques/get", {
 			credentials: 'same-origin'
 		}).then(r => r.json()).then(function(CLIQUES) {
+			top.CLIQUES = CLIQUES.cliques;
 			var menuView = $("<ul/>").append(CLIQUES.cliques.map(function(c) {
 				var b = c.name;
 				var ic = "pif-clique";
