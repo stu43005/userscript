@@ -237,8 +237,7 @@ jQuery(function($) {
 		fetch("//www.plurk.com/Cliques/get", {
 			credentials: 'same-origin'
 		}).then(r => r.json()).then(function(CLIQUES) {
-			top.CLIQUES = CLIQUES;
-			var menuView = $("<ul/>").append(CLIQUES.map(function(c) {
+			var menuView = $("<ul/>").append(CLIQUES.cliques.map(function(c) {
 				var b = c.name;
 				var ic = "pif-clique";
 				var a = CLIQUES_DEFAULT.indexOf(b);
@@ -264,7 +263,7 @@ jQuery(function($) {
 			}));
 			menu = new PopView({
 				content: menuView,
-				ex_class: "popMenu clique_menu"
+				ex_class: "pop-menu clique_menu"
 			});
 
 			$("#filter_tab").append($("<li/>").html(tab = $("<a/>", {
