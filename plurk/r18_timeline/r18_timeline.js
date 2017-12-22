@@ -119,9 +119,6 @@ jQuery(function($) {
 	}
 
 	function loadR18Timeline() {
-		lastTimes = [];
-		cachedPlurks = [];
-		loadingPlurks = false;
 		PlurkTimeline._instance.clear();
 		PlurkTimeline._instance.timelineHolder.setLoading(true);
 		getPoll();
