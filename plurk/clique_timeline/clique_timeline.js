@@ -138,8 +138,8 @@ jQuery(function ($) {
 				});
 			}
 		}).then(function (plurks) {
-			var last = AJS.getLast(plurks);
-			if (last) {
+			if (plurks.length > 0) {
+				var last = plurks[plurks.length - 1];
 				setLastTime(id, last.posted);
 			}
 			return plurks;
@@ -147,7 +147,7 @@ jQuery(function ($) {
 	}
 
 	function loadCliqueTimeline(clique) {
-		var ids = PlurkAdder._getCliqueFriends(PlurkAdder._getCliqueByName(clique));
+		var ids = _getCliqueFriends(_getCliqueByName(clique));
 		lastTimes = [];
 		cachedPlurks = [];
 		loadingPlurks = false;
@@ -238,13 +238,22 @@ jQuery(function ($) {
 	'plurkTimelineReady');
 
 	function _getCliqueFriends(a) {
-		var b = [];
-		AJS.map(a.friends.replace(/\|\|/g, "|").split(/\|/), function (c) {
-			if (c != "") {
-				b.push(parseInt(c));
+		return a.friends.replace(/\|\|/g, "|").split(/\|/).map(function (c) {
+			return parseInt(c);
+		}).filter(function (c) {
+			return !isNaN(c);
+		});
+	}
+	function _getCliqueByName(b) {
+		var a = CLIQUES_DEFAULT_TRANS.indexOf(b);
+		if (a > -1) {
+			b = CLIQUES_DEFAULT[a];
+		}
+		return CLIQUES.find((c) => {
+			if (c.name == b) {
+				return c;
 			}
 		});
-		return b;
 	}
 
 	window.plurkTimelineReady(function () {
@@ -278,7 +287,7 @@ jQuery(function ($) {
 			}));
 			menu = new PopView({
 				content: menuView,
-				ex_class: "pop-menu clique_menu",
+				exClass: "pop-menu clique_menu",
 			});
 
 			$("#filter_tab").append($("<li/>").html(tab = $("<a/>", {
