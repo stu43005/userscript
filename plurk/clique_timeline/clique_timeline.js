@@ -1,4 +1,6 @@
-jQuery(function($) {
+/* eslint-disable no-inline-comments */
+/* eslint-disable no-var */
+jQuery(function ($) {
 	if (!$("body").hasClass("timeline")) return;
 	if (typeof TimeLine == "undefined") return;
 
@@ -9,43 +11,44 @@ jQuery(function($) {
 
 	var CliqueTimeLineCache = {
 		cache: {},
-		inCache: function(a) {
+		inCache: function (a) {
 			return this.cache[this.cacheKey(a)] !== undefined;
 		},
-		get: function(a) {
+		get: function (a) {
 			return this.cache[this.cacheKey(a)];
 		},
-		set: function(c, b) {
+		set: function (c, b) {
 			var a = this.cacheKey(c);
 			this.cache[a] = b;
 		},
-		cacheKey: function(b) {
+		cacheKey: function (b) {
 			var a = [];
 			a.push(b.user_id);
 			if (b.offset) {
 				a.push(b.offset);
 			}
 			return a.join("-");
-		}
+		},
 	};
 
 	function setLastTime(id, time) {
-		var index = lastTimes.findIndex(function(t) {
+		var index = lastTimes.findIndex(function (t) {
 			return t.id == id;
 		});
 		if (index > -1) {
 			lastTimes[index].time = time;
-		} else {
+		}
+		else {
 			lastTimes.push({
 				id: id,
-				time: time
+				time: time,
 			});
 		}
 	}
 
 	function getFristTime() {
 		if (lastTimes.length < 1) return null;
-		return lastTimes.reduce(function(previousValue, currentValue, currentIndex, array) {
+		return lastTimes.reduce(function (previousValue, currentValue, currentIndex, array) {
 			return previousValue.time.getTime() > currentValue.time.getTime() ? previousValue : currentValue;
 		}, lastTimes[0]);
 	}
@@ -54,13 +57,13 @@ jQuery(function($) {
 		var f = d.posted.getTime();
 		var e = c.posted.getTime();
 		if (f < e) {
-			return 1
-		} else {
-			if (f == e) {
-				return 0
-			} else {
-				return -1
-			}
+			return 1;
+		}
+		else if (f == e) {
+			return 0;
+		}
+		else {
+			return -1;
 		}
 	}
 
@@ -71,7 +74,7 @@ jQuery(function($) {
 			cachedPlurks = [];
 			return cache;
 		}
-		var index = cache.findIndex(function(p) {
+		var index = cache.findIndex(function (p) {
 			return p.posted.getTime() < t.time.getTime();
 		});
 		cachedPlurks = cache.slice(index, -1);
@@ -82,22 +85,22 @@ jQuery(function($) {
 		return fetch("//www.plurk.com/TimeLine/getPlurks", {
 			credentials: 'same-origin',
 			method: 'POST',
-			body: (function() {
+			body: (function () {
 				var params = new URLSearchParams();
-				for (let k in d) {
+				for (const k in d) {
 					if (d.hasOwnProperty(k)) {
 						params.set(k, d[k]);
 					}
 				}
 				return params;
-			})()
-		}).then(function(response) {
+			})(),
+		}).then(function (response) {
 			var contentType = response.headers.get("content-type");
 			if (contentType && contentType.indexOf("application/json") !== -1) {
 				return response.json();
 			}
 			return JSON.parse(response.text().replace(/new\sDate\(([^\(\)]+)\)/ig, "$1"));
-		}).then(function(json) {
+		}).then(function (json) {
 			var plurks = json;
 			if (!(json instanceof Array) && json.plurks) {
 				plurks = json.plurks;
@@ -109,7 +112,7 @@ jQuery(function($) {
 				throw json.error;
 			}
 			return plurks;
-		}).then(function(plurks) {
+		}).then(function (plurks) {
 			return plurks.map(plurk => PlurksManager.getPlurk(plurk));
 		});
 	}
@@ -117,23 +120,24 @@ jQuery(function($) {
 	function getPlurks(id, offset) {
 		var d = {
 			user_id: id,
-			user_ids: JSON.stringify([id])
+			user_ids: JSON.stringify([id]),
 		};
 		if (offset) {
 			d.offset = offset.toISOString();
 		}
-		return new Promise(function(resolve, reject) {
+		return new Promise(function (resolve, reject) {
 			if (CliqueTimeLineCache.inCache(d)) {
 				resolve(CliqueTimeLineCache.get(d));
-			} else {
-				_getPlurks(d).then(function(plurks) {
+			}
+			else {
+				_getPlurks(d).then(function (plurks) {
 					CliqueTimeLineCache.set(d, plurks);
 					resolve(plurks);
-				}).catch(function(e) {
+				}).catch(function (e) {
 					reject(e);
 				});
 			}
-		}).then(function(plurks) {
+		}).then(function (plurks) {
 			var last = AJS.getLast(plurks);
 			if (last) {
 				setLastTime(id, last.posted);
@@ -151,25 +155,25 @@ jQuery(function($) {
 		PlurkTimeline._instance.timelineHolder.setLoading(true);
 		var cnt = {
 			done: 0,
-			count: ids.length
+			count: ids.length,
 		};
 		$(loadingMessageTmpl(cnt)).appendTo("#timeline_holder #div_loading .cnt");
-		Promise.all(ids.map(function(id) {
-			return getPlurks(id).then(function(plurks) {
+		Promise.all(ids.map(function (id) {
+			return getPlurks(id).then(function (plurks) {
 				cnt.done++;
 				$("#timeline_holder #div_loading .cnt .message").remove();
 				$(loadingMessageTmpl(cnt)).appendTo("#timeline_holder #div_loading .cnt");
 				return plurks;
 			});
-		})).then(function(values) {
+		})).then(function (values) {
 			return [].concat.apply([], values);
-		}).then(function(c) {
+		}).then(function (c) {
 			return cachePlurkIfNeed(c);
-		}).then(function(c) {
+		}).then(function (c) {
 			$("#timeline_holder #div_loading .cnt .message").remove();
 			PlurkTimeline._instance.addPlurks(c);
 			PlurkTimeline._instance.timelineHolder.setLoading(false);
-		}).catch(function(e) {
+		}).catch(function (e) {
 			console.error("load clique timeline error:", e);
 			alert("好像有點怪怪的:(");
 			PlurkTimeline._instance.timelineHolder.setLoading(false);
@@ -177,7 +181,7 @@ jQuery(function($) {
 	}
 
 	var loadingPlurks = false;
-	document.addEventListener("CliqueOnScrollEnd", function(e) {
+	document.addEventListener("CliqueOnScrollEnd", function (e) {
 		if (isTabActive()) {
 			// 切換到小圈圈時，禁用原本的功能
 			e.preventDefault();
@@ -187,9 +191,9 @@ jQuery(function($) {
 			if (t !== null) {
 				loadingPlurks = true;
 				PlurkTimeline._instance.timelineHolder.setLoading(true);
-				getPlurks(t.id, t.time).then(function(plurks) {
+				getPlurks(t.id, t.time).then(function (plurks) {
 					return cachePlurkIfNeed(plurks);
-				}).then(function(plurks) {
+				}).then(function (plurks) {
 					if (isTabActive()) {
 						PlurkTimeline._instance.addPlurks(plurks);
 					}
@@ -233,12 +237,22 @@ jQuery(function($) {
 	'60d4b436de71d798/raw/getPlurkTimelineInstance.js',
 	'plurkTimelineReady');
 
-	window.plurkTimelineReady(function() {
+	function _getCliqueFriends(a) {
+		var b = [];
+		AJS.map(a.friends.replace(/\|\|/g, "|").split(/\|/), function (c) {
+			if (c != "") {
+				b.push(parseInt(c));
+			}
+		});
+		return b;
+	}
+
+	window.plurkTimelineReady(function () {
 		fetch("//www.plurk.com/Cliques/get", {
-			credentials: 'same-origin'
-		}).then(r => r.json()).then(function(CLIQUES) {
+			credentials: 'same-origin',
+		}).then(r => r.json()).then(function (CLIQUES) {
 			top.CLIQUES = CLIQUES.cliques;
-			var menuView = $("<ul/>").append(CLIQUES.cliques.map(function(c) {
+			var menuView = $("<ul/>").append(CLIQUES.cliques.map(function (c) {
 				var b = c.name;
 				var ic = "pif-clique";
 				var a = CLIQUES_DEFAULT.indexOf(b);
@@ -248,23 +262,23 @@ jQuery(function($) {
 				}
 				return {
 					name: b,
-					count: PlurkAdder._getCliqueFriends(c).length,
-					icon: ic
+					count: _getCliqueFriends(c).length,
+					icon: ic,
 				};
-			}).filter(function(c) {
+			}).filter(function (c) {
 				return c.count > 0;
-			}).map(function(c) {
+			}).map(function (c) {
 				return $("<li/>", {
 					html: $("<a/>", {
 						"class": c.icon,
 						href: "#",
-						text: c.name + " (" + c.count + "人)"
-					}).bind("click", onCliqueChange.bind(null, c))
+						text: c.name + " (" + c.count + "人)",
+					}).bind("click", onCliqueChange.bind(null, c)),
 				});
 			}));
 			menu = new PopView({
 				content: menuView,
-				ex_class: "pop-menu clique_menu"
+				ex_class: "pop-menu clique_menu",
 			});
 
 			$("#filter_tab").append($("<li/>").html(tab = $("<a/>", {
@@ -273,14 +287,15 @@ jQuery(function($) {
 				id: "clique_plurks_tab_btn",
 				"class": "off_tab",
 				html: "<i class=\"pif-clique\"></i><span>小圈圈</span><i class=\"pif-dropdown\"></i>",
-				click: function(e) {
+				click: function (e) {
 					e.preventDefault();
 					if (selected === null || e.target.nodeName.toLowerCase() == "i") {
 						menu.showFrom(tab);
-					} else {
+					}
+					else {
 						onCliqueChange(selected);
 					}
-				}
+				},
 			})));
 		});
 
@@ -292,20 +307,20 @@ jQuery(function($) {
 	function trigger(name, data) {
 		var event = new CustomEvent(name, {
 			"detail": data,
-			"cancelable": true
+			"cancelable": true,
 		});
 		return document.dispatchEvent(event);
 	}
 
 	function after(target, name) {
 		return new Proxy(target, {
-			apply: function(target, thisArg, argumentsList) {
+			apply: function (target2, thisArg, argumentsList) {
 				if (!trigger(name, argumentsList)) {
 					return;
 				}
-				var result = target.apply(thisArg, argumentsList);
+				var result = target2.apply(thisArg, argumentsList);
 				return result;
-			}
+			},
 		});
 	}
 });
