@@ -2,7 +2,8 @@
 // @name          DM5 image zoom
 // @author        Shiaupiau (https://github.com/stu43005)
 // @include       http://*.dm5.com/*
-// @version       1.0
+// @include       https://*.dm5.com/*
+// @version       1.0.1
 // ==/UserScript==
 
 (function (func) {
