@@ -98,7 +98,7 @@ const friends = {
 			const profile = list[i].profile;
 			const tr = temprow.clone();
 			tr.css({
-				color: "red" === profile.color ? "red" : "grey" === profile.color ? "#b5b5b5" : "orange" === profile.color ? "#ff9800" : "inherit",
+				color: "red" === profile.color ? "var(--red)" : "grey" === profile.color ? "var(--grey)" : "orange" === profile.color ? "#ff9800" : "inherit",
 				background: '',
 			});
 			tr.find('picture img').attr('src', `https://storage.googleapis.com/kirito-1585904519813.appspot.com/avatars/${profile.avatar}.png`);
