@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Kirito Auto
 // @namespace    mykirito
-// @version      0.2.0
+// @version      0.3.0
 // @description  mykirito.com auto
 // @author       Shiaupiau
 // @include      https://mykirito.com/*
@@ -70,7 +70,14 @@ const title = {
 	notify(value, timeout = 5000) {
 		const now = Date.now();
 		const timer = setInterval(() => {
-			if (Date.now() > now + timeout) {
+			if (typeof timeout === 'function') {
+				if (!timeout()) {
+					title.notification = '';
+					title.setTitle();
+					clearInterval(timer);
+					return;
+				}
+			} else if (Date.now() > now + timeout) {
 				title.notification = '';
 				title.setTitle();
 				clearInterval(timer);
@@ -113,7 +120,10 @@ const actionWorker = {
 				if (!storage.get('actionWorkerNotify', false)) {
 					console.error(`行動需要驗證我是人類！`);
 					notify('行動需要驗證我是人類！');
-					title.notify('需要驗證');
+					title.notify('需要驗證', () => {
+						const actionsDiv = actionWorker.getActionDiv();
+						return actionsDiv && actionsDiv.querySelector('iframe');
+					});
 					storage.set('actionWorkerNotify', true);
 				}
 				return;
@@ -125,7 +135,7 @@ const actionWorker = {
 			const btn = allActions[index];
 			if (btn && !btn.disabled) {
 				if (actionWorker.delay === null) {
-					actionWorker.delay = Math.floor(Math.random() * 5) + 1;
+					actionWorker.delay = Math.floor(Math.random() * 5) + 2;
 					console.log(`可以行動，延時 ${actionWorker.delay} 秒後執行 ${btn.innerText}`);
 				}
 				if (actionWorker.delay > 0) {
@@ -170,7 +180,10 @@ const pvpWorker = {
 				if (!storage.get('pvpWorkerNotify', false)) {
 					console.error(`挑戰需要驗證我是人類！`);
 					notify('挑戰需要驗證我是人類！');
-					title.notify('需要驗證');
+					title.notify('需要驗證', () => {
+						const pvpDiv2 = pvpWorker.getPvpDiv();
+						return pvpDiv2 && pvpDiv2.querySelector('iframe');
+					});
 					storage.set('pvpWorkerNotify', true);
 				}
 				return;
@@ -178,11 +191,23 @@ const pvpWorker = {
 				storage.set('pvpWorkerNotify', false);
 			}
 
+			const reportDiv = pvpWorker.getReportDiv();
+			if (reportDiv && reportDiv.innerText.includes('對方已經轉生或升級了')) {
+				pvpWorker.enable = false;
+				console.error(`對方已經轉生或升級了，需要重新整理。`);
+				notify('對方已經轉生或升級了，需要重新整理。');
+				title.notify('需要重新整理', () => {
+					const reportDiv2 = pvpWorker.getReportDiv();
+					return reportDiv2 && reportDiv2.innerText.includes('對方已經轉生或升級了');
+				});
+				return;
+			}
+
 			const pvpBtns = pvpWorker.getPvpBtns();
 			const btn = pvpBtns[index];
 			if (btn && !btn.disabled) {
 				if (pvpWorker.delay === null) {
-					pvpWorker.delay = Math.floor(Math.random() * 5) + 1;
+					pvpWorker.delay = Math.floor(Math.random() * 5) + 2;
 					console.log(`可以挑戰，延時 ${pvpWorker.delay} 秒後執行 ${btn.innerText}`);
 				}
 				if (pvpWorker.delay > 0) {
@@ -201,6 +226,10 @@ const pvpWorker = {
 		const pvpDiv = [...document.querySelectorAll("div#root > div > div > div")].find(d => d.innerText.startsWith('挑戰'));
 		return pvpDiv;
 	},
+	getReportDiv: () => {
+		const reportDiv = [...document.querySelectorAll("div#root > div > div > div")].find(d => d.innerText.startsWith('戰鬥報告'));
+		return reportDiv;
+	},
 	getPvpBtns: () => {
 		const pvpDiv = pvpWorker.getPvpDiv();
 		if (!pvpDiv) {
@@ -211,10 +240,63 @@ const pvpWorker = {
 	},
 };
 
+const floorWorker = {
+	enable: storage.get('floorWorkerEnable', false),
+	delay: null,
+	work: () => {
+		if (!floorWorker.enable) { return; }
+
+		const floorDiv = floorWorker.getFloorDiv();
+		if (!floorDiv) { return; }
+
+		if (floorDiv.querySelector('iframe')) {
+			if (!storage.get('floorWorkerNotify', false)) {
+				console.error(`樓層獎勵需要驗證我是人類！`);
+				notify('樓層獎勵需要驗證我是人類！');
+				title.notify('需要驗證', () => {
+					const floorDiv2 = floorWorker.getFloorDiv();
+					return floorDiv2 && floorDiv2.querySelector('iframe');
+				});
+				storage.set('floorWorkerNotify', true);
+			}
+			return;
+		} else if (storage.get('floorWorkerNotify', false)) {
+			storage.set('floorWorkerNotify', false);
+		}
+
+		const btn = floorWorker.getFloorBtn();
+		if (btn && !btn.disabled) {
+			if (floorWorker.delay === null) {
+				floorWorker.delay = Math.floor(Math.random() * 5) + 2;
+				console.log(`可以領取獎勵，延時 ${floorWorker.delay} 秒後執行 ${btn.innerText}`);
+			}
+			if (floorWorker.delay > 0) {
+				floorWorker.delay--;
+				return;
+			}
+			btn.click();
+			floorWorker.delay = null;
+			console.log(`領取獎勵完成`);
+		} else {
+			floorWorker.delay = null;
+		}
+	},
+	getFloorDiv: () => {
+		const floorDiv = [...document.querySelectorAll("div#root > div > div > div")].find(d => d.innerText.startsWith('樓層獎勵'));
+		return floorDiv;
+	},
+	getFloorBtn: () => {
+		const floorDiv = floorWorker.getFloorDiv();
+		if (!floorDiv) { return; }
+		return floorDiv.querySelector('button');
+	},
+};
+
 (async function () {
 	'use strict';
 	setInterval(actionWorker.work, 1000);
 	setInterval(pvpWorker.work, 1000);
+	setInterval(floorWorker.work, 1000);
 
 	let url = "";
 	let lastUrl = "";
@@ -268,6 +350,26 @@ const pvpWorker = {
 					}
 				});
 			});
+
+			const floorTimer = setInterval(() => {
+				const floorDiv = floorWorker.getFloorDiv();
+				if (floorDiv) {
+					clearInterval(floorTimer);
+					const h3 = floorDiv.querySelector('h3');
+					if (h3) {
+						h3.insertAdjacentHTML('beforeend', '&nbsp;<label><input type="checkbox">&nbsp;Auto</label>');
+						const checkbox = h3.querySelector('input');
+						if (checkbox) {
+							checkbox.checked = floorWorker.enable;
+							checkbox.addEventListener('change', (e) => {
+								floorWorker.enable = checkbox.checked;
+								storage.set('floorWorkerEnable', floorWorker.enable);
+							});
+						}
+					}
+				}
+			}, 100);
+
 		} else if (url.includes("profile")) {
 			// 在其他玩家頁面
 			title.setPage('玩家資料');
