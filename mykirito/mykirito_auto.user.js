@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Kirito Auto
 // @namespace    mykirito
-// @version      0.3.0
+// @version      0.3.1
 // @description  mykirito.com auto
 // @author       Shiaupiau
 // @include      https://mykirito.com/*
@@ -377,12 +377,12 @@ const floorWorker = {
 			// 開其他玩家頁面先禁用自動
 			pvpWorker.enable = false;
 
-			let playerId = url.match(/\/([0-9a-zA-Z]+?)$/)[1];
-			api.profile(playerId).then(t => t.profile).then(profile => {
-				if (profile) {
-					title.setPage(`${profile.nickname} - 玩家資料`);
-				}
-			});
+			// const playerId = url.match(/\/([0-9a-zA-Z]+?)$/)[1];
+			// api.profile(playerId).then(t => t.profile).then(profile => {
+			// 	if (profile) {
+			// 		title.setPage(`${profile.nickname} - 玩家資料`);
+			// 	}
+			// });
 
 			const pvpDiv = pvpWorker.getPvpDiv();
 			if (pvpDiv) {

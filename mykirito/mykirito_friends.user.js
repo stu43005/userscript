@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Kirito Friends
 // @namespace    mykirito
-// @version      0.1.2
+// @version      0.1.3
 // @description  mykirito.com 的好友列表
 // @author       Shiaupiau
 // @include      https://mykirito.com/*
@@ -155,7 +155,6 @@ const friends = {
 		if (url.includes("profile")) {
 			// 在其他玩家頁面
 			let playerId = url.match(/\/([0-9a-zA-Z]+?)$/)[1];
-			let playerData = await api.profile(playerId).then(t => t.profile);
 
 			const typeBtns = document.querySelectorAll("div#root > div > div > div:nth-child(1) > button");
 			const addFriendBtn = document.createElement('button');
@@ -171,8 +170,10 @@ const friends = {
 					friends.removeFriend(playerId);
 					addFriendBtn.innerText = '加入好友';
 				} else {
-					friends.addFriend(playerId, playerData);
 					addFriendBtn.innerText = '移除好友';
+					api.profile(playerId).then(t => t.profile).then((profile) => {
+						friends.addFriend(playerId, profile);
+					});
 				}
 			});
 
