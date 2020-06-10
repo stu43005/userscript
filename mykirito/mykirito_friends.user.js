@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Kirito Friends
 // @namespace    mykirito
-// @version      0.1.1
+// @version      0.1.2
 // @description  mykirito.com 的好友列表
 // @author       Shiaupiau
 // @include      https://mykirito.com/*
@@ -125,7 +125,7 @@ const friends = {
 		for (let i = 0; i < list.length; i++) {
 			const user = list[i];
 			const uid = user.uid;
-			if (!user.time || user.time + 60000 < Date.now()) {
+			if (!user.time || user.time + 600000 < Date.now()) {
 				list[i] = {
 					uid: uid,
 					profile: (await api.profile(uid)).profile,
@@ -141,7 +141,7 @@ const friends = {
 
 (async function () {
 	'use strict';
-	setInterval(friends.friendsWorker, 5000);
+	setInterval(friends.friendsWorker, 10000);
 
 	let url = "";
 	let lastUrl = "";
