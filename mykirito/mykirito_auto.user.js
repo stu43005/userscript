@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Kirito Auto
 // @namespace    mykirito
-// @version      0.3.2
+// @version      0.3.3
 // @description  mykirito.com auto
 // @author       Shiaupiau
 // @include      https://mykirito.com/*
@@ -107,6 +107,7 @@ const title = {
 const actionWorker = {
 	enable: storage.get('actionWorkerEnable', false),
 	delay: null,
+	notify: false,
 	work: () => {
 		if (!actionWorker.enable) { return; }
 
@@ -117,18 +118,18 @@ const actionWorker = {
 			if (!actionsDiv) { return; }
 
 			if (actionsDiv.querySelector('iframe')) {
-				if (!storage.get('actionWorkerNotify', false)) {
+				if (!actionWorker.notify) {
 					console.error(`行動需要驗證我是人類！`);
 					notify('行動需要驗證我是人類！');
 					title.notify('需要驗證', () => {
 						const actionsDiv = actionWorker.getActionDiv();
 						return actionsDiv && actionsDiv.querySelector('iframe');
 					});
-					storage.set('actionWorkerNotify', true);
+					actionWorker.notify = true;
 				}
 				return;
-			} else if (storage.get('actionWorkerNotify', false)) {
-				storage.set('actionWorkerNotify', false);
+			} else if (actionWorker.notify) {
+				actionWorker.notify = false;
 			}
 
 			const allActions = actionWorker.getActionBtns();
@@ -167,6 +168,7 @@ const actionWorker = {
 const pvpWorker = {
 	enable: false,
 	delay: null,
+	notify: false,
 	work: () => {
 		if (!pvpWorker.enable) { return; }
 
@@ -177,18 +179,18 @@ const pvpWorker = {
 			if (!pvpDiv) { return; }
 
 			if (pvpDiv.querySelector('iframe')) {
-				if (!storage.get('pvpWorkerNotify', false)) {
+				if (!pvpWorker.notify) {
 					console.error(`挑戰需要驗證我是人類！`);
 					notify('挑戰需要驗證我是人類！');
 					title.notify('需要驗證', () => {
 						const pvpDiv2 = pvpWorker.getPvpDiv();
 						return pvpDiv2 && pvpDiv2.querySelector('iframe');
 					});
-					storage.set('pvpWorkerNotify', true);
+					pvpWorker.notify = true;
 				}
 				return;
-			} else if (storage.get('pvpWorkerNotify', false)) {
-				storage.set('pvpWorkerNotify', false);
+			} else if (pvpWorker.notify) {
+				pvpWorker.notify = false;
 			}
 
 			const reportDiv = pvpWorker.getReportDiv();
@@ -252,6 +254,7 @@ const pvpWorker = {
 const floorWorker = {
 	enable: storage.get('floorWorkerEnable', false),
 	delay: null,
+	notify: false,
 	work: () => {
 		if (!floorWorker.enable) { return; }
 
@@ -259,18 +262,18 @@ const floorWorker = {
 		if (!floorDiv) { return; }
 
 		if (floorDiv.querySelector('iframe')) {
-			if (!storage.get('floorWorkerNotify', false)) {
+			if (!floorWorker.notify) {
 				console.error(`樓層獎勵需要驗證我是人類！`);
 				notify('樓層獎勵需要驗證我是人類！');
 				title.notify('需要驗證', () => {
 					const floorDiv2 = floorWorker.getFloorDiv();
 					return floorDiv2 && floorDiv2.querySelector('iframe');
 				});
-				storage.set('floorWorkerNotify', true);
+				floorWorker.notify = true;
 			}
 			return;
-		} else if (storage.get('floorWorkerNotify', false)) {
-			storage.set('floorWorkerNotify', false);
+		} else if (floorWorker.notify) {
+			floorWorker.notify = false;
 		}
 
 		const btn = floorWorker.getFloorBtn();
