@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Kirito Auto
 // @namespace    mykirito
-// @version      0.3.1
+// @version      0.3.2
 // @description  mykirito.com auto
 // @author       Shiaupiau
 // @include      https://mykirito.com/*
@@ -199,6 +199,15 @@ const pvpWorker = {
 				title.notify('需要重新整理', () => {
 					const reportDiv2 = pvpWorker.getReportDiv();
 					return reportDiv2 && reportDiv2.innerText.includes('對方已經轉生或升級了');
+				});
+				return;
+			} else if (reportDiv && reportDiv.innerText.includes('對方已經死亡了')) {
+				pvpWorker.enable = false;
+				console.error(`對方已經死亡了。`);
+				notify('對方已經死亡了。');
+				title.notify('對方已經死亡了', () => {
+					const reportDiv2 = pvpWorker.getReportDiv();
+					return reportDiv2 && reportDiv2.innerText.includes('對方已經死亡了');
 				});
 				return;
 			}
