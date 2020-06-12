@@ -1,14 +1,12 @@
 // ==UserScript==
 // @name         Kirito Friends
 // @namespace    mykirito
-// @version      0.1.4
+// @version      0.1.5
 // @description  mykirito.com 的好友列表
 // @author       Shiaupiau
 // @include      https://mykirito.com/*
 // @include      https://kirito-1585904519813.appspot.com/*
 // @require      http://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js
-// @grant        GM_setValue
-// @grant        GM_getValue
 // @license      MIT
 // ==/UserScript==
 
