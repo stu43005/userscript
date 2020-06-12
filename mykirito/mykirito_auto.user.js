@@ -25,28 +25,6 @@ function notify(msg) {
 	}
 }
 
-const api = {
-	get: async (path) => {
-		const token = localStorage.getItem("token");
-		const r = await fetch(`https://mykirito.com/api/${path}`, {
-			"headers": {
-				"accept": "application/json, text/plain, */*",
-				"token": token
-			},
-			"referrer": "https://mykirito.com/",
-			"referrerPolicy": "no-referrer-when-downgrade",
-			"body": null,
-			"method": "GET",
-			"mode": "cors",
-			"credentials": "omit"
-		});
-		return await r.json();
-	},
-
-	profile: (uid) => api.get(`profile/${uid}`),
-	mykirito: () => api.get('my-kirito'),
-};
-
 const storage = {
 	get: (key, def) => {
 		const value = localStorage.getItem(key);

@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Kirito Friends
 // @namespace    mykirito
-// @version      0.1.3
+// @version      0.1.4
 // @description  mykirito.com 的好友列表
 // @author       Shiaupiau
 // @include      https://mykirito.com/*
@@ -117,6 +117,10 @@ const friends = {
 	},
 
 	friendsWorker: async () => {
+		if (storage.get('friendsWorkerNext', 0) > Date.now()) {
+			return;
+		}
+
 		let list = friends.getFriends();
 		if (typeof list[0] === 'string') {
 			list = list.map(uid => ({ uid }));
@@ -126,6 +130,7 @@ const friends = {
 			const user = list[i];
 			const uid = user.uid;
 			if (!user.time || user.time + 600000 < Date.now()) {
+				storage.get('friendsWorkerNext', Date.now() + 10000);
 				list[i] = {
 					uid: uid,
 					profile: (await api.profile(uid)).profile,
@@ -165,13 +170,25 @@ const friends = {
 			}
 			addFriendBtn.className = typeBtns[0].className;
 			typeBtns[typeBtns.length - 1].insertAdjacentElement('afterend', addFriendBtn);
+
+			let adding = false;
+			let tempProfile;
 			addFriendBtn.addEventListener('click', (e) => {
 				if (friends.getFriend(playerId)) {
-					friends.removeFriend(playerId);
 					addFriendBtn.innerText = '加入好友';
-				} else {
+					friends.removeFriend(playerId);
+
+				} else if (tempProfile) {
 					addFriendBtn.innerText = '移除好友';
+					friends.addFriend(playerId, tempProfile);
+
+				} else if (!adding) {
+					addFriendBtn.innerText = '請稍等...';
+					adding = true;
 					api.profile(playerId).then(t => t.profile).then((profile) => {
+						tempProfile = profile;
+						addFriendBtn.innerText = '移除好友';
+						adding = false;
 						friends.addFriend(playerId, profile);
 					});
 				}
