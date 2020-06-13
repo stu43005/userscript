@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Kirito Friends
 // @namespace    mykirito
-// @version      0.1.5
+// @version      0.1.6
 // @description  mykirito.com 的好友列表
 // @author       Shiaupiau
 // @include      https://mykirito.com/*
@@ -84,7 +84,7 @@ const friends = {
 	},
 
 	renderTable: (table) => {
-		const list = friends.getFriends();
+		const list = friends.getFriends().sort((a, b) => (b.profile ? b.profile.lv : 0) - (a.profile ? a.profile.lv : 0));
 		const mytable = $(table).clone();
 		const temprow = mytable.find('tbody > tr:nth-child(2)').clone();
 		let el;
