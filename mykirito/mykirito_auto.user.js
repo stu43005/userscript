@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Kirito Auto
 // @namespace    mykirito
-// @version      0.3.5
+// @version      0.3.5.1
 // @description  mykirito.com auto
 // @author       Shiaupiau
 // @include      https://mykirito.com/*
@@ -149,7 +149,9 @@ const pvpWorker = {
 	get enable() { return pvpWorker._enable },
 	set enable(value) {
 		pvpWorker._enable = value;
-		pvpWorker.enableCheckbox.checked = value;
+		if (pvpWorker.enableCheckbox) {
+			pvpWorker.enableCheckbox.checked = value;
+		}
 	},
 	delay: null,
 	notify: false,
