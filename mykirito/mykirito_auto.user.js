@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Kirito Auto
 // @namespace    mykirito
-// @version      0.3.4
+// @version      0.3.5
 // @description  mykirito.com auto
 // @author       Shiaupiau
 // @include      https://mykirito.com/*
@@ -144,7 +144,13 @@ const actionWorker = {
 };
 
 const pvpWorker = {
-	enable: false,
+	enableCheckbox: null,
+	_enable: false,
+	get enable() { return pvpWorker._enable },
+	set enable(value) {
+		pvpWorker._enable = value;
+		pvpWorker.enableCheckbox.checked = value;
+	},
 	delay: null,
 	notify: false,
 	work: () => {
@@ -156,7 +162,8 @@ const pvpWorker = {
 			const pvpDiv = pvpWorker.getPvpDiv();
 			if (!pvpDiv) { return; }
 
-			if (pvpDiv.querySelector('iframe')) {
+			const reportDiv = pvpWorker.getReportDiv();
+			if (pvpDiv.querySelector('iframe') || (reportDiv && reportDiv.innerText.includes('需進行防機器人驗證'))) {
 				if (!pvpWorker.notify) {
 					console.error(`挑戰需要驗證我是人類！`);
 					notify('挑戰需要驗證我是人類！');
@@ -171,7 +178,6 @@ const pvpWorker = {
 				pvpWorker.notify = false;
 			}
 
-			const reportDiv = pvpWorker.getReportDiv();
 			if (reportDiv && reportDiv.innerText.includes('對方已經轉生或升級了')) {
 				pvpWorker.enable = false;
 				console.error(`對方已經轉生或升級了，需要重新整理。`);
@@ -396,6 +402,7 @@ const floorWorker = {
 					h3.insertAdjacentHTML('beforeend', '&nbsp;<label><input type="checkbox">&nbsp;Auto</label>');
 					const checkbox = h3.querySelector('input');
 					if (checkbox) {
+						pvpWorker.enableCheckbox = checkbox;
 						checkbox.addEventListener('change', (e) => {
 							pvpWorker.enable = checkbox.checked;
 						});
