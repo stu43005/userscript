@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Kirito Auto
 // @namespace    mykirito
-// @version      0.3.3
+// @version      0.3.4
 // @description  mykirito.com auto
 // @author       Shiaupiau
 // @include      https://mykirito.com/*
@@ -190,6 +190,16 @@ const pvpWorker = {
 					return reportDiv2 && reportDiv2.innerText.includes('對方已經死亡了');
 				});
 				return;
+			} else if (reportDiv && reportDiv.innerText.includes('錯誤')) {
+				const msg = pvpWorker.getReportFirstLine(reportDiv);
+				pvpWorker.enable = false;
+				console.error(`錯誤：${msg}`);
+				notify(`錯誤：${msg}`);
+				title.notify(`錯誤：${msg}`, () => {
+					const reportDiv2 = pvpWorker.getReportDiv();
+					return reportDiv2 && reportDiv2.innerText.includes('錯誤');
+				});
+				return;
 			}
 
 			const pvpBtns = pvpWorker.getPvpBtns();
@@ -217,7 +227,12 @@ const pvpWorker = {
 	},
 	getReportDiv: () => {
 		const reportDiv = [...document.querySelectorAll("div#root > div > div > div")].find(d => d.innerText.startsWith('戰鬥報告'));
-		return reportDiv;
+		const reports = [...reportDiv.children].filter(d => d.nodeName == 'DIV');
+		return reports[0];
+	},
+	getReportFirstLine: (reportDiv) => {
+		const text = reportDiv.querySelector('div:nth-child(2)').innerText;
+		return text.replace(/^(.*\n|\d+\n?)/, '');
 	},
 	getPvpBtns: () => {
 		const pvpDiv = pvpWorker.getPvpDiv();
