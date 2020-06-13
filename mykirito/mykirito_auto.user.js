@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Kirito Auto
 // @namespace    mykirito
-// @version      0.3.5.1
+// @version      0.3.6
 // @description  mykirito.com auto
 // @author       Shiaupiau
 // @include      https://mykirito.com/*
@@ -156,6 +156,9 @@ const pvpWorker = {
 	delay: null,
 	notify: false,
 	work: () => {
+		if (storage.get('pvpWorkerAutoReload', '') == location.href) {
+			pvpWorker.enable = true;
+		}
 		if (!pvpWorker.enable) { return; }
 
 		const index = storage.get('pvpWorker', null);
@@ -167,6 +170,13 @@ const pvpWorker = {
 			const reportDiv = pvpWorker.getReportDiv();
 			if (pvpDiv.querySelector('iframe') || (reportDiv && reportDiv.innerText.includes('需進行防機器人驗證'))) {
 				if (!pvpWorker.notify) {
+					if (storage.get('pvpWorkerAutoReload', '') != location.href) {
+						location.reload();
+						storage.set('pvpWorkerAutoReload', location.href);
+						return;
+					}
+					storage.set('pvpWorkerAutoReload', '');
+
 					console.error(`挑戰需要驗證我是人類！`);
 					notify('挑戰需要驗證我是人類！');
 					title.notify('需要驗證', () => {
