@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Kirito Friends
 // @namespace    mykirito
-// @version      0.1.6
+// @version      0.1.7
 // @description  mykirito.com 的好友列表
 // @author       Shiaupiau
 // @include      https://mykirito.com/*
@@ -195,15 +195,20 @@ const friends = {
 		} else if (url.includes("user-list")) {
 			// 在玩家列表
 			const timeout = setInterval(() => {
-				if (document.querySelector("div#root > div > div > table > tbody > tr:nth-child(2)")) {
+				const userlistDiv = [...document.querySelectorAll("div#root > div > div")].find(d => d.innerText.startsWith('玩家列表'));
+				if (userlistDiv.innerText.includes('好友列表')) {
 					clearInterval(timeout);
-					const mytable = friends.renderTable(document.querySelector("div#root > div > div > table"));
-					const h3 = $(document.querySelector("div#root > div > div > h3")).clone();
+					return;
+				}
+				if (userlistDiv.querySelector("table > tbody > tr:nth-child(2)")) {
+					clearInterval(timeout);
+
+					const mytable = friends.renderTable(userlistDiv.querySelector("table"));
+					const h3 = $(userlistDiv.querySelector("h3")).clone();
 					h3.text('好友列表');
-					const div = document.querySelector("div#root > div > div");
-					div.insertAdjacentHTML('afterbegin', '<hr>');
-					div.insertAdjacentElement('afterbegin', mytable);
-					div.insertAdjacentElement('afterbegin', h3.get(0));
+					userlistDiv.insertAdjacentHTML('afterbegin', '<hr>');
+					userlistDiv.insertAdjacentElement('afterbegin', mytable);
+					userlistDiv.insertAdjacentElement('afterbegin', h3.get(0));
 				}
 			}, 100);
 
