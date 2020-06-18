@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Kirito Auto
 // @namespace    mykirito
-// @version      0.3.6
+// @version      0.3.7
 // @description  mykirito.com auto
 // @author       Shiaupiau
 // @include      https://mykirito.com/*
@@ -82,6 +82,10 @@ const title = {
 	}
 };
 
+function getRandomDelay(type) {
+	return Math.floor(Math.random() * 20) + 10;
+}
+
 const actionWorker = {
 	enable: storage.get('actionWorkerEnable', false),
 	delay: null,
@@ -95,7 +99,8 @@ const actionWorker = {
 			const actionsDiv = actionWorker.getActionDiv();
 			if (!actionsDiv) { return; }
 
-			if (actionsDiv.querySelector('iframe')) {
+			const reportDiv = actionWorker.getReportDiv();
+			if (actionsDiv.querySelector('iframe') || (reportDiv && reportDiv.innerText.includes('需進行防機器人驗證'))) {
 				if (!actionWorker.notify) {
 					console.error(`行動需要驗證我是人類！`);
 					notify('行動需要驗證我是人類！');
@@ -110,11 +115,26 @@ const actionWorker = {
 				actionWorker.notify = false;
 			}
 
+			if (reportDiv && reportDiv.innerText.includes('重新整理')) {
+				location.reload();
+				return;
+			} else if (reportDiv && reportDiv.innerText.includes('錯誤')) {
+				const msg = reportDiv.innerText;
+				actionWorker.enable = false;
+				console.error(`錯誤：${msg}`);
+				notify(`錯誤：${msg}`);
+				title.notify(`錯誤：${msg}`, () => {
+					const reportDiv2 = actionWorker.getReportDiv();
+					return reportDiv2 && reportDiv2.innerText.includes('錯誤');
+				});
+				return;
+			}
+
 			const allActions = actionWorker.getActionBtns();
 			const btn = allActions[index];
 			if (btn && !btn.disabled) {
 				if (actionWorker.delay === null) {
-					actionWorker.delay = Math.floor(Math.random() * 5) + 2;
+					actionWorker.delay = getRandomDelay(1);
 					console.log(`可以行動，延時 ${actionWorker.delay} 秒後執行 ${btn.innerText}`);
 				}
 				if (actionWorker.delay > 0) {
@@ -132,6 +152,11 @@ const actionWorker = {
 	getActionDiv: () => {
 		const actionsDiv = [...document.querySelectorAll("div#root > div > div > div")].find(d => d.innerText.startsWith('行動'));
 		return actionsDiv;
+	},
+	getReportDiv: () => {
+		const reportDiv = [...document.querySelectorAll("div#root > div > div > div")].find(d => d.innerText.startsWith('行動記錄'));
+		const reports = [...reportDiv.children].filter(d => d.nodeName == 'DIV');
+		return reports[0];
 	},
 	getActionBtns: () => {
 		const actionsDiv = actionWorker.getActionDiv();
@@ -224,7 +249,7 @@ const pvpWorker = {
 			const btn = pvpBtns[index];
 			if (btn && !btn.disabled) {
 				if (pvpWorker.delay === null) {
-					pvpWorker.delay = Math.floor(Math.random() * 5) + 2;
+					pvpWorker.delay = getRandomDelay(2);
 					console.log(`可以挑戰，延時 ${pvpWorker.delay} 秒後執行 ${btn.innerText}`);
 				}
 				if (pvpWorker.delay > 0) {
@@ -290,7 +315,7 @@ const floorWorker = {
 		const btn = floorWorker.getFloorBtn();
 		if (btn && !btn.disabled) {
 			if (floorWorker.delay === null) {
-				floorWorker.delay = Math.floor(Math.random() * 5) + 2;
+				floorWorker.delay = getRandomDelay(3);
 				console.log(`可以領取獎勵，延時 ${floorWorker.delay} 秒後執行 ${btn.innerText}`);
 			}
 			if (floorWorker.delay > 0) {
