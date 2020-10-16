@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name       Plurk mute 噗浪自動消音
-// @version    1.0.0
+// @version    1.0.1
 // @match      https://www.plurk.com/*
 // @require    https://ajax.googleapis.com/ajax/libs/jquery/2.1.4/jquery.min.js
 // @require    https://rawgit.com/stu43005/localscript/master/index.js
@@ -75,7 +75,7 @@ const Options = {
 
 	async function getUsername() {
 		if (user_name == null) {
-			user_name = getGlobalVariable("GLOBAL.page_user.nick_name");
+			user_name = await getGlobalVariable("GLOBAL.page_user.nick_name");
 			Logger.debug('user_name:', user_name);
 		}
 		return user_name;
