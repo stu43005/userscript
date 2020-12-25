@@ -3,21 +3,28 @@
 // @author        Shiaupiau (https://github.com/stu43005)
 // @include       http://*.dm5.com/*
 // @include       https://*.dm5.com/*
-// @version       1.0.1
+// @version       1.1
 // ==/UserScript==
 
-(function (func) {
-	const script = document.createElement('script');
-	script.textContent = '(' + func.toString() + ')(window)';
-	document.body.appendChild(script);
+(function init(func) {
+	setTimeout(function () {
+		if (typeof jQuery === 'undefined') {
+			console.log('[DM5 image download] No jQuery, try again later');
+			init(func);
+			return;
+		}
+		const script = document.createElement('script');
+		script.textContent = '(' + func.toString() + ')(window)';
+		document.body.appendChild(script);
+	}, 500);
 })(function () {
-	if (!$(".view-main").length) return;
+	if (!jQuery(".view-main").length) return;
 
-	$(".rightToolBar").prepend(`<a href="javascript:void(0);" title="下載圖片" id="img-download-button" class="logo_1" style="display: block !important;transform: rotate(-90deg);" target="_blank"><div class="tip">下載圖片</div></a>`);
+	jQuery(".rightToolBar").prepend(`<a href="javascript:void(0);" title="下載圖片" id="img-download-button" class="logo_1" style="display: block !important;transform: rotate(-90deg);" target="_blank"><div class="tip">下載圖片</div></a>`);
 
-	const btn = $("#img-download-button");
+	const btn = jQuery("#img-download-button");
 
-	$(document).on("mousemove touchmove", ".view-main img", function (e) {
+	jQuery(document).on("mousemove touchmove", ".view-main img", function (e) {
 		const img = e.target;
 		btn.attr("href", img.src);
 	});

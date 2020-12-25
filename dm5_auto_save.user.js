@@ -1,13 +1,24 @@
 // ==UserScript==
 // @name         DM5 Auto Bookmark
-// @version      0.1
+// @version      0.2
 // @author       Shiaupiau (https://github.com/stu43005)
 // @include       http://*.dm5.com/*
 // @include       https://*.dm5.com/*
 // @grant        none
 // ==/UserScript==
 
-(function () {
+(function init(func) {
+	setTimeout(function () {
+		if (typeof jQuery === 'undefined') {
+			console.log('[DM5 Auto Bookmark] No jQuery, try again later');
+			init(func);
+			return;
+		}
+		const script = document.createElement('script');
+		script.textContent = '(' + func.toString() + ')(window)';
+		document.body.appendChild(script);
+	}, 500);
+})(function () {
 	'use strict';
 
 	const data = {
@@ -28,6 +39,6 @@
 		navigator.sendBeacon('bookmarker.ashx?d=' + new Date().getTime(), formData);
 	}
 
-	$(document).on('click', '#last-win .view-btn-back', sendBookmark);
-	$(window).on('unload', sendBookmark);
-})();
+	jQuery(document).on('click', '#last-win .view-btn-back', sendBookmark);
+	jQuery(window).on('unload', sendBookmark);
+});

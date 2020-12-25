@@ -3,34 +3,41 @@
 // @author        Shiaupiau (https://github.com/stu43005)
 // @include       http://*.dm5.com/*
 // @include       https://*.dm5.com/*
-// @version       1.0.1
+// @version       1.1
 // ==/UserScript==
 
-(function (func) {
-	const script = document.createElement('script');
-	script.textContent = '(' + func.toString() + ')(window)';
-	document.body.appendChild(script);
+(function init(func) {
+	setTimeout(function () {
+		if (typeof jQuery === 'undefined') {
+			console.log('[DM5 image zoom] No jQuery, try again later');
+			init(func);
+			return;
+		}
+		const script = document.createElement('script');
+		script.textContent = '(' + func.toString() + ')(window)';
+		document.body.appendChild(script);
+	}, 500);
 })(function () {
 	const zoomRatio = 2;
 
 	const resultWidth = 300;
 	const resultHeight = 300;
 
-	if (!$(".view-main").length) return;
+	if (!jQuery(".view-main").length) return;
 
-	$("body").append(`<div id="img-zoom-container" style="position: fixed; right: 20px; bottom: 100px; background-color: #1a1a1a; padding: 10px; border-radius: 3px;"><div id="img-zoom-result" style="width: ${resultWidth}px; height: ${resultHeight}px;"></div></div>`);
+	jQuery("body").append(`<div id="img-zoom-container" style="position: fixed; right: 20px; bottom: 100px; background-color: #1a1a1a; padding: 10px; border-radius: 3px;"><div id="img-zoom-result" style="width: ${resultWidth}px; height: ${resultHeight}px;"></div></div>`);
 
-	$(".rightToolBar").prepend(`<a href="javascript:void(0);" title="放大鏡" id="img-zoom-button" class="logo_3" style="display: block !important;"><div class="tip">放大鏡</div></a>`);
+	jQuery(".rightToolBar").prepend(`<a href="javascript:void(0);" title="放大鏡" id="img-zoom-button" class="logo_3" style="display: block !important;"><div class="tip">放大鏡</div></a>`);
 
-	$("#img-zoom-button").click(function () {
-		$("#img-zoom-container").toggle();
+	jQuery("#img-zoom-button").click(function () {
+		jQuery("#img-zoom-container").toggle();
 	});
 
 	const lensWidth = resultWidth / zoomRatio;
 	const lensHeight = resultHeight / zoomRatio;
 
 	const result = document.getElementById("img-zoom-result");
-	$(document).on("mousemove touchmove", ".view-main img", moveLens);
+	jQuery(document).on("mousemove touchmove", ".view-main img", moveLens);
 
 	function moveLens(e) {
 		/* Prevent any other actions that may occur when moving over the image */
