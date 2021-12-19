@@ -2,7 +2,7 @@
 // @name        Open Youtube video on Holodex
 // @description Add a button under the video to open the video on Holodex.net
 // @namespace   OpenYoutubeOnHolodex
-// @version     1.0.0
+// @version     1.1.0
 // @include     https://www.youtube.com/*
 // @run-at      document-end
 // @noframes    
@@ -33,6 +33,7 @@ async function getVideoFromHolodexApi(vid) {
 }
 
 async function reinitialize() {
+	addButton();
 	openHolodexButton.style.display = 'none';
 
 	const vid = window.location.href.match(watchRegex)?.[1];
@@ -46,7 +47,8 @@ async function reinitialize() {
 
 function addButton() {
 	const ytpRightControls = document.getElementsByClassName("ytp-right-controls")[0];
-	if (ytpRightControls) {
+	const openOnHolodexButton2 = document.getElementsByClassName("openOnHolodexButton")[0];
+	if (ytpRightControls && !openOnHolodexButton2) {
 		ytpRightControls.prepend(openHolodexButton);
 	}
 }
