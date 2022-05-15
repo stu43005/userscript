@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Youtube network error hook
 // @namespace    https://github.com/stu43005
-// @version      0.1
+// @version      0.2
 // @description
 // @author       stu43005
 // @match        https://www.youtube.com/watch*
@@ -17,17 +17,27 @@ let retry = 0;
 function main() {
     'use strict';
 
-    if (!window._yt_player || !window._yt_player.jS) {
+    if (!window._yt_player) {
         if (retry > 10) return;
         setTimeout(main, 1000);
         retry++;
         return;
     }
 
-    const temp1 = new window._yt_player.jS({ videoData: { isValid() { return false } } });
+    const firstKey = Object.keys(window._yt_player).find(key => {
+        return window._yt_player[key]?.toString().includes(".videoData.isValid()");
+    });
+    if (!firstKey) return;
 
-    const old_onError = temp1.C.__proto__.onError;
-    temp1.C.__proto__.onError = function (a) {
+    const temp1 = new window._yt_player[firstKey]({ videoData: { isValid() { return false } } });
+
+    const secondKey = Object.keys(temp1).find(key => {
+        return temp1[key]?.__proto__?.onError;
+    });
+    if (!secondKey) return;
+
+    const old_onError = temp1[secondKey].__proto__.onError;
+    temp1[secondKey].__proto__.onError = function (a) {
         old_onError.call(this, a);
         const videoId = window.ytcfg.get("VIDEO_ID");
         console.log(`[errorHook][${videoId}] yt player error:`, a);
