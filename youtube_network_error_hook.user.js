@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Youtube network error hook
 // @namespace    https://github.com/stu43005
-// @version      0.2
+// @version      0.3
 // @description
 // @author       stu43005
 // @match        https://www.youtube.com/watch*
@@ -41,7 +41,7 @@ function main() {
         old_onError.call(this, a);
         const videoId = window.ytcfg.get("VIDEO_ID");
         console.log(`[errorHook][${videoId}] yt player error:`, a);
-        window.miniToast.init(`yt player error: ${a}`, {}).show();
+        window.miniToast.init(a, {}).show();
     };
 
     console.log(`[errorHook] setup page: ${location.href}`);
