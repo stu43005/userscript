@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name        PTT 以外的相關網站自動轉址到 ptt.cc
-// @version     1.0.0
+// @version     1.1.0
 // @match       *://www.pttweb.cc/bbs/*
 // @match       *://pttweb.tw/bbs/*
 // @match       *://ptthito.com/*
