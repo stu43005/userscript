@@ -6,6 +6,7 @@
 // @match       *://ptthito.com/*
 // @match       *://disp.cc/b/*
 // @match       *://moptt.tw/p/*
+// @match       *://ptt-politics.com/*
 // @run-at      document-start
 // @noframes
 // ==/UserScript==
@@ -36,6 +37,7 @@ switch (window.location.host) {
         }
     case "pttweb.tw":
     case "disp.cc":
+    case "ptt-politics.com":
         {
             const links = document.querySelectorAll("a[href^='https://www.ptt.cc/bbs/']");
             for (const a of links) {
