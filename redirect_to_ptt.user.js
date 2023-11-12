@@ -7,7 +7,7 @@
 // @match       *://disp.cc/b/*
 // @match       *://moptt.tw/p/*
 // @match       *://ptt-politics.com/*
-// @run-at      document-start
+// @run-at      document-end
 // @noframes
 // ==/UserScript==
 // @ts-check
