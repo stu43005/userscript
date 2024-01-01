@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name                Holodex & Discord Sync
 // @name:zh-TW          Holodex & Discord 同步
-// @version             1.0.0
+// @version             1.0.1
 // @description         Using the Holodex multi-view archive sync feature, synchronize of Discord chat.
 // @description:zh-TW   使用Holodex多窗存檔同步功能，同步觀看Discord聊天室
 // @author              Shiaupiau
@@ -17,25 +17,17 @@
 // @grant               GM_saveTab
 // ==/UserScript==
 // @ts-check
+/// <reference types="tampermonkey" />
 "use strict";
 
 const tabUpdateInterval = 1000;
 
 /**
  * @typedef {Element & { __vue__?: any; }} VueElement
- * @typedef {Record<string, GmTab>} GmTabs
  * @typedef {Record<string, any>} GmTab
- *
- * @typedef {Object} ScriptGlobals
- * @prop {(callback: (tabs: GmTabs) => void) => void} GM_getTabs
- * @prop {(callback: (tab: GmTab) => void) => void} GM_getTab
- * @prop {(tab: GmTab, cb?: () => void) => void} GM_saveTab
- *
- * @typedef {Window & ScriptGlobals} ExtendedWindow
  */
 
-const w = /** @type {ExtendedWindow} */ (/** @type {any} */ (window));
-if (!w.GM_getTabs || !w.GM_getTab || !w.GM_saveTab) {
+if (!window.GM_getTabs || !window.GM_getTab || !window.GM_saveTab) {
     throw new Error("Unsupport GM_getTab");
 }
 
@@ -124,11 +116,11 @@ class HolodexController {
     }
 
     saveComponentProps() {
-        w.GM_getTab((tab) => {
+        window.GM_getTab((tab) => {
             tab.paused = this.multiviewSyncBarComponent?.paused;
             tab.currentTs = this.multiviewSyncBarComponent?.currentTs;
             tab.hasVideosToSync = this.multiviewSyncBarComponent?.hasVideosToSync;
-            w.GM_saveTab(tab);
+            window.GM_saveTab(tab);
         });
     }
 
@@ -248,7 +240,7 @@ class DiscordController {
      */
     async getActiveTab() {
         return new Promise((resolve, reject) => {
-            w.GM_getTabs((tabs) => {
+            window.GM_getTabs((tabs) => {
                 if (this.currentTab && this.currentTab in tabs) {
                     const tabId = this.currentTab;
                     const tab = tabs[tabId];
