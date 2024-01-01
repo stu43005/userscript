@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name                Holodex & Discord Sync
 // @name:zh-TW          Holodex & Discord 同步
-// @version             1.0.2
+// @version             1.1.0
 // @description         Using the Holodex multi-view archive sync feature, synchronize of Discord chat.
 // @description:zh-TW   使用Holodex多窗存檔同步功能，同步觀看Discord聊天室
 // @author              Shiaupiau
@@ -144,9 +144,23 @@ class HolodexController {
  */
 
 class DiscordController {
-    // get scroller() {
-    //     return document.querySelector(`div[class*="messagesWrapper"] > div[class*="scroller"]`);
-    // }
+
+    /**
+     * @returns {boolean}
+     */
+    get isSticky() {
+        return this._isSticky;
+    }
+    /**
+     * @param {boolean} value
+     */
+    set isSticky(value) {
+        if (this._isSticky !== value) {
+            logger.info("isSticky changed", value);
+        }
+        this._isSticky = value;
+        this.updateIndicator();
+    }
 
     constructor() {
         /**
@@ -156,7 +170,7 @@ class DiscordController {
         /**
          * @type {boolean}
          */
-        this.isSticky = true;
+        this._isSticky = true;
         /**
          * @type {number}
          */
@@ -206,6 +220,17 @@ class DiscordController {
             childList: true,
             subtree: true,
         });
+
+        this.indicator = document.createElement("div");
+        this.indicator.style.position = "fixed";
+        this.indicator.style.right = "0";
+        this.indicator.style.bottom = "0";
+        this.indicator.style.width = "10px";
+        this.indicator.style.height = "10px";
+        this.indicator.style.zIndex = "99999";
+        this.indicator.style.pointerEvents = "none";
+        document.body.append(this.indicator);
+        this.updateIndicator();
     }
 
     /**
@@ -233,6 +258,15 @@ class DiscordController {
             this.setScroller(scroller);
         }
         return scroller;
+    }
+
+    updateIndicator() {
+        let value = true;
+        value &&= !this.paused;
+        value &&= this.isSticky;
+        value &&= !!this.getScroller();
+
+        this.indicator.style.backgroundColor = value ? "green" : "red";
     }
 
     /**
@@ -358,13 +392,11 @@ class DiscordController {
             if (scrollTop !== null && scroller.scrollTop >= scrollTop - 32) {
                 if (!this.isSticky) {
                     this.isSticky = true;
-                    logger.info("isSticky changed", this.isSticky);
                 }
                 this.scroll();
             }
             else if (this.isSticky && !this.autoScroll && this.scrollTop !== scroller.scrollTop) {
                 this.isSticky = false;
-                logger.info("isSticky changed", this.isSticky);
             }
         }
         this.autoScroll = false;
@@ -385,6 +417,7 @@ class DiscordController {
                 this.scrollTop = scroller.scrollTop;
             }
         }
+        this.updateIndicator();
     }
 }
 
