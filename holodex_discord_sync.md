@@ -4,8 +4,8 @@
 
 ## 安裝
 
-1. 安裝 [Tampermonkey](https://www.tampermonkey.net/)
-2. 安裝腳本
+1. 安裝使用者腳本管理器：[Tampermonkey](https://www.tampermonkey.net/)
+2. [安裝腳本](https://github.com/stu43005/userscript/raw/master/holodex_discord_sync.user.js)
 
 ## 如何使用
 
@@ -35,9 +35,9 @@
 * 存檔同步為撥放中狀態 (同步進度列左方控制按鈕顯示暫停⏸️符號為播放中)
 * 將 Discord 頻道捲到最下面
 
-### 支援哪些 userscript 擴充功能？
+### 有支援其他的使用者腳本管理器嗎？
 
-以下的擴充功能經過測試，並可以正常使用：
+僅以下的擴充功能經過測試，並可以正常使用：
 * [Tampermonkey](https://www.tampermonkey.net/)
 
-其他有支援 `GM_getTabs`、`GM_getTab`、`GM_saveTab` API 的擴充功能，理論上皆可使用。
+如其他的管理器有支援 `GM_getTabs`、`GM_getTab`、`GM_saveTab` API，理論上也可使用。
