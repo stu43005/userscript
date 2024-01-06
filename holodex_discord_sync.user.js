@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name                Holodex & Discord Sync
 // @name:zh-TW          Holodex & Discord 同步
-// @version             1.1.0
+// @version             1.2.0
 // @description         Using the Holodex multi-view archive sync feature, synchronize of Discord chat.
 // @description:zh-TW   使用Holodex多窗存檔同步功能，同步觀看Discord聊天室
 // @author              Shiaupiau
@@ -50,6 +50,20 @@ const logger = {
     },
 };
 
+function makeIndicator() {
+    const indicator = document.createElement("div");
+    indicator.style.position = "fixed";
+    indicator.style.right = "0";
+    indicator.style.bottom = "0";
+    indicator.style.width = "auto";
+    indicator.style.minWidth = "1em";
+    indicator.style.height = "1em";
+    indicator.style.zIndex = "99999";
+    indicator.style.pointerEvents = "none";
+    document.body.append(indicator);
+    return indicator;
+}
+
 class HolodexController {
     constructor() {
         this.observer = new MutationObserver((mutationList) => {
@@ -74,6 +88,28 @@ class HolodexController {
         const syncBar = document.querySelector(".sync-bar");
         if (syncBar) {
             this.connectSyncBar(syncBar);
+        }
+
+        this.indicator = makeIndicator();
+        this.updateIndicator();
+    }
+
+    updateIndicator() {
+        if (!this.multiviewSyncBarComponent) {
+            this.indicator.style.backgroundColor = "transparent";
+            this.indicator.innerText = ""; // No Holodex sync-bar detected.
+        } else if (
+            !this.multiviewSyncBarComponent.hasVideosToSync ||
+            this.multiviewSyncBarComponent.currentTs <= 0
+        ) {
+            this.indicator.style.backgroundColor = "gray";
+            this.indicator.innerText = "Nothing to sync, please open two overlapping archives.";
+        } else if (this.multiviewSyncBarComponent.paused) {
+            this.indicator.style.backgroundColor = "indianred";
+            this.indicator.innerText = "Player has been paused.";
+        } else {
+            this.indicator.style.backgroundColor = "green";
+            this.indicator.innerText = "";
         }
     }
 
@@ -103,6 +139,7 @@ class HolodexController {
             this.multiviewSyncBarComponent = multiviewSyncBarComponent;
             this.timer = setInterval(() => this.saveComponentProps(), tabUpdateInterval);
         }
+        this.updateIndicator();
     }
 
     findSyncBarComponent(vue) {
@@ -122,6 +159,7 @@ class HolodexController {
             tab.hasVideosToSync = this.multiviewSyncBarComponent?.hasVideosToSync;
             window.GM_saveTab(tab);
         });
+        this.updateIndicator();
     }
 
     disconnectSyncBar() {
@@ -133,6 +171,7 @@ class HolodexController {
             this.multiviewSyncBarComponent = undefined;
         }
         this.saveComponentProps();
+        this.updateIndicator();
     }
 }
 
@@ -144,6 +183,39 @@ class HolodexController {
  */
 
 class DiscordController {
+    /**
+     * @returns {string | null}
+     */
+    get currentTab() {
+        return this._currentTab;
+    }
+    /**
+     * @param {string | null} value
+     */
+    set currentTab(value) {
+        if (this._currentTab !== value) {
+            logger.info(`currentTab changed: from ${this._currentTab} to ${value}`);
+        }
+        this._currentTab = value;
+        this.updateIndicator();
+    }
+
+    /**
+     * @returns {boolean}
+     */
+    get paused() {
+        return this._paused;
+    }
+    /**
+     * @param {boolean} value
+     */
+    set paused(value) {
+        if (this._paused !== value) {
+            logger.info("paused changed", value);
+        }
+        this._paused = value;
+        this.updateIndicator();
+    }
 
     /**
      * @returns {boolean}
@@ -166,7 +238,7 @@ class DiscordController {
         /**
          * @type {string | null}
          */
-        this.currentTab = null;
+        this._currentTab = null;
         /**
          * @type {boolean}
          */
@@ -178,7 +250,7 @@ class DiscordController {
         /**
          * @type {boolean}
          */
-        this.paused = true;
+        this._paused = true;
         /**
          * @type {Element | null}
          */
@@ -221,15 +293,7 @@ class DiscordController {
             subtree: true,
         });
 
-        this.indicator = document.createElement("div");
-        this.indicator.style.position = "fixed";
-        this.indicator.style.right = "0";
-        this.indicator.style.bottom = "0";
-        this.indicator.style.width = "10px";
-        this.indicator.style.height = "10px";
-        this.indicator.style.zIndex = "99999";
-        this.indicator.style.pointerEvents = "none";
-        document.body.append(this.indicator);
+        this.indicator = makeIndicator();
         this.updateIndicator();
     }
 
@@ -248,6 +312,7 @@ class DiscordController {
             });
         }
         logger.debug("set scroller", scroller);
+        this.updateIndicator();
     }
 
     getScroller() {
@@ -261,12 +326,22 @@ class DiscordController {
     }
 
     updateIndicator() {
-        let value = true;
-        value &&= !this.paused;
-        value &&= this.isSticky;
-        value &&= !!this.getScroller();
-
-        this.indicator.style.backgroundColor = value ? "green" : "red";
+        if (!this.getScroller()) {
+            this.indicator.style.backgroundColor = "transparent";
+            this.indicator.innerText = ""; // No Discord channel detected.
+        } else if (this.currentTab === null) {
+            this.indicator.style.backgroundColor = "gray";
+            this.indicator.innerText = ""; // No Holodex sync-bar detected.
+        } else if (this.paused) {
+            this.indicator.style.backgroundColor = "indianred";
+            this.indicator.innerText = "Holodex player has been paused.";
+        } else if (!this.isSticky) {
+            this.indicator.style.backgroundColor = "yellow";
+            this.indicator.innerText = "You are viewing previous messages.";
+        } else {
+            this.indicator.style.backgroundColor = "green";
+            this.indicator.innerText = "";
+        }
     }
 
     /**
@@ -367,13 +442,19 @@ class DiscordController {
             for (const message of messages) {
                 if (message.timestamp > this.currentTs) {
                     const box = message.element.getBoundingClientRect();
+                    const jumpToPresentBarHeight =
+                        document
+                            .querySelector(
+                                `div[class*="messagesWrapper"] > div[class*="jumpToPresentBar"]`
+                            )
+                            ?.getBoundingClientRect()?.height ?? 0;
                     const top =
                         box.top +
                         scroller.scrollTop -
                         scroller.clientTop -
                         scrollerBox.top -
                         scrollerBox.height +
-                        32;
+                        jumpToPresentBarHeight;
                     return top;
                 }
             }
@@ -394,8 +475,7 @@ class DiscordController {
                     this.isSticky = true;
                 }
                 this.scroll();
-            }
-            else if (this.isSticky && !this.autoScroll && this.scrollTop !== scroller.scrollTop) {
+            } else if (this.isSticky && !this.autoScroll && this.scrollTop !== scroller.scrollTop) {
                 this.isSticky = false;
             }
         }
@@ -417,7 +497,6 @@ class DiscordController {
                 this.scrollTop = scroller.scrollTop;
             }
         }
-        this.updateIndicator();
     }
 }
 
