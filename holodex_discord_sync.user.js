@@ -8,6 +8,7 @@
 // @namespace           https://github.com/stu43005
 // @match               https://holodex.net/*
 // @match               https://staging.holodex.net/*
+// @match               https://discord.com/login
 // @match               https://discord.com/apps
 // @match               https://discord.com/channels/*
 // @run-at              document-end
