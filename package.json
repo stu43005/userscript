@@ -1,5 +1,6 @@
 {
   "dependencies": {
-    "@types/tampermonkey": "^5.0.2"
+    "@types/tampermonkey": "^5.0.2",
+    "idb": "^8.0.3"
   }
 }

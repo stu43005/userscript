@@ -7,13 +7,15 @@
 // @match               *://twitter.com/*
 // @match               *://x.com/*
 // @match               *://*.fanbox.cc/*
+// @match               *://fantia.jp/*
 // @run-at              document-end
 // @noframes
 // @grant               GM_xmlhttpRequest
+// @require             https://cdn.jsdelivr.net/npm/idb@8/build/umd.js
 // ==/UserScript==
-// @ts-check
-/// <reference types="tampermonkey" />
+/// <reference path="./types/idb-global.d.ts" />
 "use strict";
+{
 
 class EagleApi {
     // Eagle API URL
@@ -116,53 +118,98 @@ class EagleApi {
 }
 
 /**
- * @param {Element} article
+ * @typedef {import("idb").DBSchema & {
+ *     cache: {
+ *         key: string;
+ *         value: string;
+ *     };
+ * }} CacheSchema
+ */
+
+class CacheStore {
+    /** @type {Promise<import("idb").IDBPDatabase<CacheSchema>> | null} */
+	static db = null;
+	/** @type {"cache"} */
+	static storeName = "cache";
+
+	static async openDb() {
+		if (!this.db) {
+			this.db = idb.openDB("eagle-helper-store", 1, {
+				upgrade: (db) => {
+					db.createObjectStore(this.storeName);
+				},
+			});
+		}
+		return await this.db;
+	}
+
+	/**
+	 * @param {string} key
+	 * @param {string} val
+	 */
+	static async setValue(key, val) {
+		return (await this.openDb()).put(this.storeName, val, key);
+	}
+
+	/**
+	 * @param {string} key
+	 */
+	static async getValue(key) {
+		return (await this.openDb()).get(this.storeName, key);
+	}
+}
+
+/**
+ * @param {HTMLElement} article
  * @param {Config} config
  */
 async function onArticleChange(article, config) {
-    try {
-        const images = Array.from(article.querySelectorAll(config.imagesSelector ?? "img"));
-        for (const img of images) {
+    const images = Array.from(article.querySelectorAll(config.imagesSelector ?? "img"))
+        .filter((el) => el instanceof HTMLImageElement);
+    for (const img of images) {
+		try {
             if (img.hasAttribute("data-eagle-tagger")) {
                 continue;
             }
+			img.setAttribute("data-eagle-tagger", "pending");
 
             if (config.titleFn) {
-                const title = config.titleFn(article, img);
+                const title = await config.titleFn(article, img);
                 if (title) {
                     img.setAttribute("eagle-title", title);
                 }
             }
             if (config.srcFn) {
-                const src = config.srcFn(article, img);
+                const src = await config.srcFn(article, img);
                 if (src) {
-                    img.setAttribute("eagle-src", src);
+					img.setAttribute("eagle-src", src);
                 }
             }
             if (config.annotationFn) {
-                const annotation = config.annotationFn(article, img);
+                const annotation = await config.annotationFn(article, img);
                 if (annotation) {
                     img.setAttribute("eagle-annotation", annotation);
                 }
             }
             if (config.tagsFn) {
                 const eagleTags = await EagleApi.getTags();
-                const tags = config.tagsFn(article, img, eagleTags);
+                const tags = await config.tagsFn(article, img, eagleTags);
                 if (tags.length > 0) {
                     img.setAttribute("eagle-tags", tags.join(","));
                 }
             }
             if (config.linkFn) {
-                const link = config.linkFn(article, img);
+                const link = await config.linkFn(article, img);
                 if (link) {
                     img.setAttribute("eagle-link", link);
                 }
             }
 
             img.setAttribute("data-eagle-tagger", "true");
+		} catch (error) {
+			console.error("[Eagle Tagger] Error:", error);
+			img.removeAttribute("data-eagle-tagger");
         }
-    } catch (error) {
-        console.error("[Eagle Tagger] Error:", error);
     }
 }
 
@@ -171,11 +218,11 @@ async function onArticleChange(article, config) {
  * @prop {string[]} hostnames
  * @prop {string} [articlesSelector]
  * @prop {string} [imagesSelector]
- * @prop {(article: Element, image: Element) => string | null} [titleFn]
- * @prop {(article: Element, image: Element) => string | null} [srcFn]
- * @prop {(article: Element, image: Element) => string | null} [annotationFn]
- * @prop {(article: Element, image: Element, eagleTags: string[]) => string[]} [tagsFn]
- * @prop {(article: Element, image: Element) => string | null} [linkFn]
+ * @prop {(article: HTMLElement, image: HTMLImageElement) => string | null} [titleFn]
+ * @prop {(article: HTMLElement, image: HTMLImageElement) => string | null | Promise<string | null>} [srcFn]
+ * @prop {(article: HTMLElement, image: HTMLImageElement) => string | null} [annotationFn]
+ * @prop {(article: HTMLElement, image: HTMLImageElement, eagleTags: string[]) => string[]} [tagsFn]
+ * @prop {(article: HTMLElement, image: HTMLImageElement) => string | null} [linkFn]
  */
 
 /** @type {Config[]} */
@@ -192,14 +239,40 @@ const configs = [
     {
         hostnames: [".fanbox.cc"],
         srcFn: (article, img) => img.closest("a")?.href ?? null
-    }
+    },
+	{
+		hostnames: ["fantia.jp"],
+		articlesSelector: `post-show`,
+		imagesSelector: `.image-thumbnails img`,
+		srcFn: async (article, img) => {
+			const postId = article.dataset.postId;
+			const imgId = img.src.match(/\/post_content_photo\/file\/(\d+)\//)?.[1];
+			if (!postId || !imgId) return null;
+			const fullImagePage = `https://fantia.jp/posts/${postId}/post_content_photo/${imgId}`;
+			const urlFromCache = await CacheStore.getValue(fullImagePage);
+			if (urlFromCache) {
+				// already in cache
+				return urlFromCache;
+			}
+			const res = await fetch(fullImagePage);
+			const html = await res.text();
+			const tempContainer = document.createElement("div");
+			tempContainer.innerHTML = html;
+			const fullImageUrl = tempContainer.querySelector("img")?.src;
+			if (fullImageUrl) {
+				await CacheStore.setValue(fullImagePage, fullImageUrl);
+			}
+			return fullImageUrl ?? null;
+		}
+	}
 ];
 const enabledConfigs = configs.filter((config) => config.hostnames.some(h => h.startsWith(".") && location.hostname.endsWith(h) || location.hostname === h));
 
 console.log("[Eagle Tagger] ready");
 for (const config of enabledConfigs) {
     const articlesSelector = config.articlesSelector ?? "article";
-    const articles = Array.from(document.querySelectorAll(articlesSelector));
+    const articles = Array.from(document.querySelectorAll(articlesSelector))
+        .filter((el) => el instanceof HTMLElement);
     for (const article of articles) {
         onArticleChange(article, config);
     }
@@ -208,17 +281,18 @@ for (const config of enabledConfigs) {
 const observer = new MutationObserver((mutationList) => {
     for (const mutation of mutationList) {
         for (const addedNode of mutation.addedNodes) {
-            if (addedNode instanceof Element) {
+            if (addedNode instanceof HTMLElement) {
                 for (const config of enabledConfigs) {
                     const articlesSelector = config.articlesSelector ?? "article";
                     if (addedNode.matches(articlesSelector)) {
                         onArticleChange(addedNode, config);
                     } else {
                         const closestArticle = addedNode.closest(articlesSelector);
-                        if (closestArticle) {
+                        if (closestArticle instanceof HTMLElement) {
                             onArticleChange(closestArticle, config);
                         } else {
-                            const articles = Array.from(addedNode.querySelectorAll(articlesSelector));
+                            const articles = Array.from(addedNode.querySelectorAll(articlesSelector))
+                                .filter((el) => el instanceof HTMLElement);
                             for (const article of articles) {
                                 onArticleChange(article, config);
                             }
@@ -233,3 +307,5 @@ observer.observe(document.body, {
     childList: true,
     subtree: true,
 });
+
+}
