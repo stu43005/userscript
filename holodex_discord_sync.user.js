@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name                Holodex & Discord Sync
 // @name:zh-TW          Holodex & Discord 同步
-// @version             1.2.0
+// @version             1.2.1
 // @description         Using the Holodex multi-view archive sync feature, synchronize of Discord chat.
 // @description:zh-TW   使用Holodex多窗存檔同步功能，同步觀看Discord聊天室
 // @author              Shiaupiau
@@ -443,12 +443,13 @@ class DiscordController {
             for (const message of messages) {
                 if (message.timestamp > this.currentTs) {
                     const box = message.element.getBoundingClientRect();
-                    const jumpToPresentBarHeight =
+                    const jumpToPresentBarTop =
                         document
                             .querySelector(
                                 `div[class*="messagesWrapper"] > div[class*="jumpToPresentBar"]`
                             )
-                            ?.getBoundingClientRect()?.height ?? 0;
+                            ?.getBoundingClientRect()?.top ?? 0;
+                    const jumpToPresentBarHeight = jumpToPresentBarTop > 0 ? scrollerBox.bottom - jumpToPresentBarTop : 0;
                     const top =
                         box.top +
                         scroller.scrollTop -
